@@ -128,12 +128,15 @@ const SaewunTable: React.FC<{ data: CycleItem[], currentAge: number, birthYear: 
   );
 };
 
-// 원광대 만세력 스타일 월운 테이블 (정확한 스타일)
+// 원광대 만세력 스타일 월운 테이블 - 수십 년치 표시 (태어난 해~현재+5년)
 const WolwunTable: React.FC<{ data: CycleItem[], title: string, birthYear: number }> = ({ data, title, birthYear }) => {
-  // 역순으로 표시 (12월 → 1월)
+  // 역순으로 표시 (최근 → 과거)
   const displayData = [...data].reverse();
   const currentMonth = new Date().getMonth() + 1;
   const currentYear = new Date().getFullYear();
+  
+  // 년도별로 그룹화하여 년도 구분선 추가
+  let lastYear = 0;
   
   return (
     <div className="mb-6">
@@ -144,8 +147,9 @@ const WolwunTable: React.FC<{ data: CycleItem[], title: string, birthYear: numbe
           {displayData.map((item, idx) => {
             const monthNum = Number(item.age);
             const isCurrentMonth = item.year === currentYear && monthNum === currentMonth;
+            const isYearStart = item.age === 12; // 12월이 년도의 시작 (역순이므로)
             return (
-              <div key={idx} className={`w-9 text-center py-0.5 text-base font-bold font-serif border border-gray-300 ${isCurrentMonth ? 'bg-pink-200' : getElementBgColor(item.ganji.charAt(0))} ${getElementTextColor(item.ganji.charAt(0))}`}>
+              <div key={idx} className={`w-9 text-center py-0.5 text-base font-bold font-serif border border-gray-300 ${isYearStart ? 'border-l-2 border-l-red-400' : ''} ${isCurrentMonth ? 'bg-pink-200' : getElementBgColor(item.ganji.charAt(0))} ${getElementTextColor(item.ganji.charAt(0))}`}>
                 {item.ganji.charAt(0)}
               </div>
             );
@@ -156,8 +160,9 @@ const WolwunTable: React.FC<{ data: CycleItem[], title: string, birthYear: numbe
           {displayData.map((item, idx) => {
             const monthNum = Number(item.age);
             const isCurrentMonth = item.year === currentYear && monthNum === currentMonth;
+            const isYearStart = item.age === 12;
             return (
-              <div key={idx} className={`w-9 text-center py-0.5 text-base font-bold font-serif border-x border-b border-gray-300 ${isCurrentMonth ? 'bg-pink-200' : getElementBgColor(item.ganji.charAt(1))} ${getElementTextColor(item.ganji.charAt(1))}`}>
+              <div key={idx} className={`w-9 text-center py-0.5 text-base font-bold font-serif border-x border-b border-gray-300 ${isYearStart ? 'border-l-2 border-l-red-400' : ''} ${isCurrentMonth ? 'bg-pink-200' : getElementBgColor(item.ganji.charAt(1))} ${getElementTextColor(item.ganji.charAt(1))}`}>
                 {item.ganji.charAt(1)}
               </div>
             );
@@ -168,14 +173,27 @@ const WolwunTable: React.FC<{ data: CycleItem[], title: string, birthYear: numbe
           {displayData.map((item, idx) => {
             const monthNum = Number(item.age);
             const isCurrentMonth = item.year === currentYear && monthNum === currentMonth;
+            const isYearStart = item.age === 12;
             return (
-              <div key={idx} className={`w-9 text-[10px] text-center py-0.5 border-x border-b border-gray-300 ${isCurrentMonth ? 'bg-pink-300 font-bold' : 'bg-white'}`}>
+              <div key={idx} className={`w-9 text-[10px] text-center py-0.5 border-x border-b border-gray-300 ${isYearStart ? 'border-l-2 border-l-red-400' : ''} ${isCurrentMonth ? 'bg-pink-300 font-bold' : 'bg-white'}`}>
                 {item.age}
               </div>
             );
           })}
         </div>
+        {/* 년도 행 (맨 하단) - 12월마다 년도 표시 */}
+        <div className="flex flex-row min-w-max">
+          {displayData.map((item, idx) => {
+            const isYearLabel = item.age === 6; // 6월 위치에 년도 표시
+            return (
+              <div key={idx} className={`w-9 text-[8px] text-center py-0.5 bg-gray-50 ${isYearLabel ? 'text-gray-700 font-bold' : 'text-transparent'}`}>
+                {isYearLabel ? item.year : ''}
+              </div>
+            );
+          })}
+        </div>
       </div>
+      <p className="text-xs text-gray-500 mt-1">← 스크롤하여 과거/미래 월운 확인 (총 {Math.ceil(data.length / 12)}년치)</p>
     </div>
   );
 };
@@ -729,7 +747,7 @@ ${sajuResult.fengShuiThesis}
             />
             <WolwunTable 
               data={sajuResult.wolwun} 
-              title={`${new Date().getFullYear()}년 (${sajuResult.koreanAge}세) 월운`}
+              title={`월운 (月運) - ${parseInt(input.birthDate.split('-')[0])}년~${new Date().getFullYear() + 5}년`}
               birthYear={parseInt(input.birthDate.split('-')[0])}
             />
           </section>

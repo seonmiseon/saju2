@@ -364,55 +364,34 @@ export const analyzeSaju = async (input: UserInput): Promise<SajuAnalysisResult>
     }
   }
 
-  // 6. Calculate Wolwun (Monthly Luck) - 절기 기준으로 정확하게 계산
-  // 월운은 '절(節)'을 기준으로 바뀜 (입춘→인월, 경칩→묘월 등)
-  // lunar-javascript의 getEightChar()는 절기 기준 월간지를 반환함
+  // 6. Calculate Wolwun (Monthly Luck) - 원광대 만세력 스타일로 수십 년치 계산
+  // 태어난 해부터 현재+5년까지 모든 월운을 계산
   const wolwunList: CycleItem[] = [];
-  const wolwunYear = currentYear;
+  const startWolwunYear = year; // 태어난 해부터 시작
+  const endWolwunYear = currentYear + 5; // 현재 + 5년까지
   
-  // 절입일 기준표 (양력 기준, 매년 1-2일 차이 있음)
-  // 중요: 사주의 월은 '절(節)'을 기준으로 바뀜 (중기가 아님)
-  // 1월(寅月): 입춘 ~2/4, 2월(卯月): 경칩 ~3/6, 3월(辰月): 청명 ~4/5
-  // 4월(巳月): 입하 ~5/6, 5월(午月): 망종 ~6/6, 6월(未月): 소서 ~7/7
-  // 7월(申月): 입추 ~8/8, 8월(酉月): 백로 ~9/8, 9월(戌月): 한로 ~10/8
-  // 10월(亥月): 입동 ~11/7, 11월(子月): 대설 ~12/7, 12월(丑月): 소한 ~1/6
-  
-  // 각 양력월에 해당하는 절입일 이후 날짜로 계산
-  const monthCalcDates = [
-    { solarMonth: 1, day: 10 },   // 1월 10일 → 12월(축월) 丑月 (소한 이후)
-    { solarMonth: 2, day: 10 },   // 2월 10일 → 1월(인월) 寅月 (입춘 이후)
-    { solarMonth: 3, day: 10 },   // 3월 10일 → 2월(묘월) 卯月 (경칩 이후)
-    { solarMonth: 4, day: 10 },   // 4월 10일 → 3월(진월) 辰月 (청명 이후)
-    { solarMonth: 5, day: 10 },   // 5월 10일 → 4월(사월) 巳月 (입하 이후)
-    { solarMonth: 6, day: 10 },   // 6월 10일 → 5월(오월) 午月 (망종 이후)
-    { solarMonth: 7, day: 10 },   // 7월 10일 → 6월(미월) 未月 (소서 이후)
-    { solarMonth: 8, day: 10 },   // 8월 10일 → 7월(신월) 申月 (입추 이후)
-    { solarMonth: 9, day: 10 },   // 9월 10일 → 8월(유월) 酉月 (백로 이후)
-    { solarMonth: 10, day: 10 },  // 10월 10일 → 9월(술월) 戌月 (한로 이후)
-    { solarMonth: 11, day: 10 },  // 11월 10일 → 10월(해월) 亥月 (입동 이후)
-    { solarMonth: 12, day: 10 },  // 12월 10일 → 11월(자월) 子月 (대설 이후)
-  ];
+  // 각 해의 12개월 월운 계산
+  for (let targetYear = startWolwunYear; targetYear <= endWolwunYear; targetYear++) {
+    for (let displayMonth = 1; displayMonth <= 12; displayMonth++) {
+      try {
+        // 각 월의 10일을 기준으로 계산 (절입일 이후)
+        const s = Solar.fromYmd(targetYear, displayMonth, 10);
+        const l = s.getLunar();
+        const bz = l.getEightChar();
+        const monthGan = bz.getMonthGan();
+        const monthZhi = bz.getMonthZhi();
+        const mGanZhi = monthGan + monthZhi;
 
-  // 월운 표시 순서: 1월(정축)~12월(무자) - 원광대 만세력 기준
-  for (let displayMonth = 1; displayMonth <= 12; displayMonth++) {
-    try {
-      const calcInfo = monthCalcDates[displayMonth - 1];
-      const s = Solar.fromYmd(wolwunYear, calcInfo.solarMonth, calcInfo.day);
-      const l = s.getLunar();
-      const bz = l.getEightChar();
-      const monthGan = bz.getMonthGan();
-      const monthZhi = bz.getMonthZhi();
-      const mGanZhi = monthGan + monthZhi;
-
-      wolwunList.push({
-        age: displayMonth, // 표시용 월 (1~12)
-        ganji: mGanZhi,
-        ganjiKorean: getGanjiKorean(mGanZhi),
-        tenGod: getTenGod(dayStem, monthGan),
-        year: wolwunYear
-      });
-    } catch (e) {
-      console.warn(`Wolwun error at ${wolwunYear}.${displayMonth}`, e);
+        wolwunList.push({
+          age: displayMonth, // 표시용 월 (1~12)
+          ganji: mGanZhi,
+          ganjiKorean: getGanjiKorean(mGanZhi),
+          tenGod: getTenGod(dayStem, monthGan),
+          year: targetYear
+        });
+      } catch (e) {
+        console.warn(`Wolwun error at ${targetYear}.${displayMonth}`, e);
+      }
     }
   }
 
