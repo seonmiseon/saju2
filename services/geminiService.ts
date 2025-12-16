@@ -311,19 +311,22 @@ export const analyzeSaju = async (input: UserInput): Promise<SajuAnalysisResult>
   const dayPillar = createPillar(dayStem, dayBranch);
   const hourPillar = createPillar(hourStem, hourBranch);
 
-  // 4. Calculate Daewun (10-year cycles) - Wonkwang style with year display
+  // 4. Calculate Daewun (10-year cycles) - 원광대 만세력 스타일 (121세까지)
   const yun = baZi.getYun(input.gender === 'male' ? 1 : 0);
   const daewunList: CycleItem[] = [];
   const daewunObjs = yun.getDaYun();
   const startAge = yun.getStartYear(); // Age when first Daewun starts
   
-  // Calculate Daewun with start years
-  for (let i = 0; i < daewunObjs.length && i < 13; i++) {
+  // Calculate Daewun - 121세까지 모든 대운 계산
+  for (let i = 0; i < daewunObjs.length; i++) {
     try {
       const dy = daewunObjs[i];
       const dyStartAge = dy.getStartAge();
       const ganZhi = dy.getGanZhi();
       const startYear = year + dyStartAge;
+      
+      // 121세까지 표시
+      if (dyStartAge > 130) break;
       
       daewunList.push({
         age: dyStartAge === 0 ? 0.6 : dyStartAge,
@@ -332,8 +335,6 @@ export const analyzeSaju = async (input: UserInput): Promise<SajuAnalysisResult>
         tenGod: getTenGod(dayStem, ganZhi.charAt(0)),
         startYear: startYear
       });
-      
-      if (dyStartAge > 121) break; 
     } catch (e) {
       console.warn("Daewun error", e);
       break;

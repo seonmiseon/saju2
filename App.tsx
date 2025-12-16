@@ -28,43 +28,69 @@ const getElementTextColor = (char: string): string => {
   return "text-black";
 };
 
-// 원광대 만세력 스타일 대운 테이블
+// 원광대 만세력 스타일 대운 테이블 (정확히 동일한 레이아웃)
 const DaewunTable: React.FC<{ data: CycleItem[], birthYear: number, currentAge: number }> = ({ data, birthYear, currentAge }) => {
-  // 역순 (높은 나이 -> 낮은 나이, 왼쪽에서 오른쪽)
+  // 역순 (높은 나이 -> 낮은 나이, 왼쪽에서 오른쪽) - 원광대 스타일
   const displayData = [...data].reverse();
   
   return (
     <div className="mb-6">
       <h4 className="font-bold text-base mb-2 text-gray-800">대운 (大運)</h4>
-      <div className="w-full overflow-x-auto">
-        <div className="flex flex-row min-w-max">
-          {displayData.map((item, idx) => {
-            const age = typeof item.age === 'number' ? item.age : parseFloat(String(item.age));
-            const isCurrentDaewun = currentAge >= age && currentAge < age + 10;
-            
-            return (
-              <div key={idx} className={`flex flex-col w-11 border border-gray-400 shrink-0 ${isCurrentDaewun ? 'bg-orange-200' : 'bg-white'}`}>
-                {/* 나이 */}
-                <div className="text-[10px] text-center py-0.5 border-b border-gray-300 font-bold bg-white">
-                  {item.age}
-                </div>
-                {/* 천간 */}
-                <div className={`text-center py-1 text-lg font-bold font-serif ${getElementBgColor(item.ganji.charAt(0))} ${getElementTextColor(item.ganji.charAt(0))}`}>
-                  {item.ganji.charAt(0)}
-                </div>
-                {/* 지지 */}
-                <div className={`text-center py-1 text-lg font-bold font-serif border-t border-gray-300 ${getElementBgColor(item.ganji.charAt(1))} ${getElementTextColor(item.ganji.charAt(1))}`}>
-                  {item.ganji.charAt(1)}
-                </div>
-                {/* 시작년도 */}
-                <div className="text-[9px] text-center py-0.5 border-t border-gray-300 bg-gray-50 text-gray-600">
-                  {item.startYear}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+      <div className="w-full overflow-x-auto pb-2">
+        <table className="border-collapse min-w-max">
+          <tbody>
+            {/* 나이 행 (맨 위) */}
+            <tr>
+              {displayData.map((item, idx) => {
+                const age = typeof item.age === 'number' ? item.age : parseFloat(String(item.age));
+                const isCurrentDaewun = currentAge >= age && currentAge < age + 10;
+                return (
+                  <td key={idx} className={`w-10 text-[10px] text-center py-0.5 border border-gray-400 font-bold ${isCurrentDaewun ? 'bg-orange-300' : 'bg-gray-100'}`}>
+                    {item.age}
+                  </td>
+                );
+              })}
+            </tr>
+            {/* 천간 행 */}
+            <tr>
+              {displayData.map((item, idx) => {
+                const age = typeof item.age === 'number' ? item.age : parseFloat(String(item.age));
+                const isCurrentDaewun = currentAge >= age && currentAge < age + 10;
+                return (
+                  <td key={idx} className={`w-10 text-center py-1 text-lg font-bold font-serif border border-gray-400 ${isCurrentDaewun ? 'bg-orange-200' : getElementBgColor(item.ganji.charAt(0))} ${getElementTextColor(item.ganji.charAt(0))}`}>
+                    {item.ganji.charAt(0)}
+                  </td>
+                );
+              })}
+            </tr>
+            {/* 지지 행 */}
+            <tr>
+              {displayData.map((item, idx) => {
+                const age = typeof item.age === 'number' ? item.age : parseFloat(String(item.age));
+                const isCurrentDaewun = currentAge >= age && currentAge < age + 10;
+                return (
+                  <td key={idx} className={`w-10 text-center py-1 text-lg font-bold font-serif border border-gray-400 ${isCurrentDaewun ? 'bg-orange-200' : getElementBgColor(item.ganji.charAt(1))} ${getElementTextColor(item.ganji.charAt(1))}`}>
+                    {item.ganji.charAt(1)}
+                  </td>
+                );
+              })}
+            </tr>
+            {/* 시작년도 행 (맨 아래) */}
+            <tr>
+              {displayData.map((item, idx) => {
+                const age = typeof item.age === 'number' ? item.age : parseFloat(String(item.age));
+                const isCurrentDaewun = currentAge >= age && currentAge < age + 10;
+                return (
+                  <td key={idx} className={`w-10 text-[9px] text-center py-0.5 border border-gray-400 ${isCurrentDaewun ? 'bg-orange-100' : 'bg-white'} text-gray-600`}>
+                    {item.startYear}
+                  </td>
+                );
+              })}
+            </tr>
+          </tbody>
+        </table>
       </div>
+      <p className="text-xs text-gray-500 mt-1">← 스크롤하여 미래 대운 확인 (총 {data.length}개 대운)</p>
     </div>
   );
 };
