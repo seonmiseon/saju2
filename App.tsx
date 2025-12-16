@@ -30,8 +30,13 @@ const getElementTextColor = (char: string): string => {
 
 // 원광대 만세력 스타일 대운 테이블 (정확히 동일한 레이아웃)
 const DaewunTable: React.FC<{ data: CycleItem[], birthYear: number, currentAge: number }> = ({ data, birthYear, currentAge }) => {
-  // 역순 (높은 나이 -> 낮은 나이, 왼쪽에서 오른쪽) - 원광대 스타일
-  const displayData = [...data].reverse();
+  // 원광대 스타일: 오른쪽에서 왼쪽으로 읽음 (낮은 나이 -> 높은 나이)
+  // 테이블에서는 높은 나이가 왼쪽, 낮은 나이가 오른쪽
+  const displayData = [...data].sort((a, b) => {
+    const ageA = typeof a.age === 'number' ? a.age : parseFloat(String(a.age));
+    const ageB = typeof b.age === 'number' ? b.age : parseFloat(String(b.age));
+    return ageB - ageA; // 내림차순 (121 -> 1)
+  });
   
   return (
     <div className="mb-6">
@@ -277,6 +282,7 @@ const App: React.FC = () => {
   const chatEndRef = useRef<HTMLDivElement>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
+  const fullReportRef = useRef<HTMLDivElement>(null); // 전체 화면 캡처용
 
   // New State for API Key UI
   const [isKeySaved, setIsKeySaved] = useState(false);
@@ -488,172 +494,58 @@ ${sajuResult.fengShuiThesis}
   };
 
   const handleDownloadPDF = async () => {
-    if (!reportRef.current || !sajuResult) return;
+    if (!fullReportRef.current || !sajuResult) return;
     try {
-      // PDF용 임시 컨테이너 생성
-      const pdfContainer = document.createElement('div');
-      pdfContainer.style.cssText = 'position: absolute; left: -9999px; top: 0; width: 210mm; background: white; padding: 20px; font-family: sans-serif;';
+      // 로딩 표시
+      const loadingMsg = document.createElement('div');
+      loadingMsg.style.cssText = 'position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 9999; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px;';
+      loadingMsg.innerHTML = '📄 PDF 생성 중... 잠시만 기다려주세요';
+      document.body.appendChild(loadingMsg);
+
+      // 화면에 보이는 전체 콘텐츠를 그대로 캡처
+      const element = fullReportRef.current;
       
-      // PDF 콘텐츠 생성
-      pdfContainer.innerHTML = `
-        <div style="padding: 40px; font-size: 14px; line-height: 1.8;">
-          <h1 style="text-align: center; font-size: 28px; margin-bottom: 10px; border-bottom: 3px solid #333; padding-bottom: 15px;">천기누설 운명 감정서</h1>
-          <p style="text-align: center; font-size: 18px; margin-bottom: 30px;">${input.name} 님 (${sajuResult.koreanAge}세)</p>
-          
-          <div style="background: #f5f5f5; padding: 20px; margin-bottom: 30px; border-radius: 8px;">
-            <h3 style="margin: 0 0 15px 0;">기본 정보</h3>
-            <p>• 생년월일(양력): ${sajuResult.solarDateStr}</p>
-            <p>• 생년월일(음력): ${sajuResult.lunarDateStr}</p>
-            <p>• 태어난 시각: ${input.birthTime}</p>
-            <p>• 절기: ${sajuResult.solarTermStr}</p>
-          </div>
-          
-          <div style="background: #fff8e8; padding: 20px; margin-bottom: 30px; border: 2px solid #e8d4c0; border-radius: 8px;">
-            <h3 style="margin: 0 0 15px 0;">사주 원국</h3>
-            <table style="width: 100%; text-align: center; border-collapse: collapse;">
-              <tr style="background: #f0e6d8;">
-                <th style="padding: 10px; border: 1px solid #ccc;">시주</th>
-                <th style="padding: 10px; border: 1px solid #ccc;">일주</th>
-                <th style="padding: 10px; border: 1px solid #ccc;">월주</th>
-                <th style="padding: 10px; border: 1px solid #ccc;">년주</th>
-              </tr>
-              <tr>
-                <td style="padding: 15px; border: 1px solid #ccc; font-size: 24px;">${sajuResult.hourPillar.stem}${sajuResult.hourPillar.branch}</td>
-                <td style="padding: 15px; border: 1px solid #ccc; font-size: 24px;">${sajuResult.dayPillar.stem}${sajuResult.dayPillar.branch}</td>
-                <td style="padding: 15px; border: 1px solid #ccc; font-size: 24px;">${sajuResult.monthPillar.stem}${sajuResult.monthPillar.branch}</td>
-                <td style="padding: 15px; border: 1px solid #ccc; font-size: 24px;">${sajuResult.yearPillar.stem}${sajuResult.yearPillar.branch}</td>
-              </tr>
-            </table>
-            <p style="margin-top: 15px; text-align: center;">
-              오행: 木(${sajuResult.elementCounts.Wood}) 火(${sajuResult.elementCounts.Fire}) 土(${sajuResult.elementCounts.Earth}) 金(${sajuResult.elementCounts.Metal}) 水(${sajuResult.elementCounts.Water})
-            </p>
-            <p style="text-align: center; color: #c5a059; font-weight: bold;">
-              채워야 할 기운: ${sajuResult.missingElements.map(m => `${m.priority}순위 ${m.element}`).join(', ')}
-            </p>
-          </div>
-          
-          <div style="margin-bottom: 30px; page-break-inside: avoid;">
-            <h2 style="border-left: 4px solid #333; padding-left: 10px;">1. 타고난 기질과 운명</h2>
-            <p style="text-align: justify; white-space: pre-line;">${sajuResult.dayMasterReading}</p>
-          </div>
-          
-          <div style="margin-bottom: 30px; background: #fff8f0; padding: 20px; border-radius: 8px; page-break-inside: avoid;">
-            <h2 style="color: #8b6914;">2. 개운 비책 (대박의 열쇠)</h2>
-            <p style="text-align: justify; white-space: pre-line;">${sajuResult.chaeumAdvice.summary}</p>
-            <div style="margin-top: 20px;">
-              <p><strong>🎨 행운의 색:</strong> ${sajuResult.chaeumAdvice.color}</p>
-              <p style="margin-left: 20px; color: #666;">${sajuResult.chaeumAdvice.colorAdvice || ''}</p>
-              <p><strong>🧭 대박 방위:</strong> ${sajuResult.chaeumAdvice.direction}</p>
-              <p style="margin-left: 20px; color: #666;">${sajuResult.chaeumAdvice.directionAdvice || ''}</p>
-              <p><strong>🏺 개운 아이템:</strong> ${sajuResult.chaeumAdvice.items}</p>
-              <p style="margin-left: 20px; color: #666;">${sajuResult.chaeumAdvice.itemAdvice || ''}</p>
-            </div>
-          </div>
-          
-          <div style="margin-bottom: 30px; background: #f0f7ff; padding: 20px; border-radius: 8px; page-break-inside: avoid;">
-            <h2 style="color: #1a4a8a;">3. 맞춤형 건강 처방</h2>
-            <h4 style="color: #c53030;">⚠️ 취약 장기</h4>
-            <p style="white-space: pre-line;">${sajuResult.healthAnalysis.weakOrgans}</p>
-            <h4 style="color: #d97706;">🩺 예상 증상</h4>
-            <p style="white-space: pre-line;">${sajuResult.healthAnalysis.symptoms}</p>
-            <h4 style="color: #1a4a8a;">📋 전문의 상세 처방</h4>
-            <p style="white-space: pre-line; text-align: justify;">${sajuResult.healthAnalysis.medicalAdvice}</p>
-            <h4 style="color: #166534;">🥗 추천 식이요법</h4>
-            <p style="white-space: pre-line;">${sajuResult.healthAnalysis.foodRecommendation}</p>
-          </div>
-          
-          <div style="margin-bottom: 30px; background: #fff5f5; padding: 20px; border-radius: 8px; border-top: 4px solid #dc2626; page-break-inside: avoid;">
-            <h2 style="color: #b91c1c;">4. 2026년 (병오년) 대박 운세</h2>
-            <h4>🔥 총운</h4>
-            <p style="white-space: pre-line; text-align: justify;">${sajuResult.fortune2026.overall}</p>
-            <h4>💰 재물운</h4>
-            <p style="white-space: pre-line;">${sajuResult.fortune2026.wealth}</p>
-            <h4>💼 직업/사업운</h4>
-            <p style="white-space: pre-line;">${sajuResult.fortune2026.career}</p>
-            <h4>💕 애정/가정운</h4>
-            <p style="white-space: pre-line;">${sajuResult.fortune2026.love}</p>
-            <h4>💪 건강운</h4>
-            <p style="white-space: pre-line;">${sajuResult.fortune2026.health}</p>
-          </div>
-          
-          <div style="margin-bottom: 30px; background: #1f2937; color: white; padding: 20px; border-radius: 8px; page-break-inside: avoid;">
-            <h2 style="color: #fbbf24;">5. 귀인과 길일 (풍수지리)</h2>
-            <table style="width: 100%; color: white; border-collapse: collapse; margin-bottom: 20px;">
-              <tr style="background: #374151;">
-                <th style="padding: 10px; text-align: left;">날짜</th>
-                <th style="padding: 10px; text-align: left;">시간</th>
-                <th style="padding: 10px; text-align: left;">방위</th>
-              </tr>
-              ${sajuResult.luckyTable.map(row => `
-                <tr style="border-bottom: 1px solid #4b5563;">
-                  <td style="padding: 10px; color: #fbbf24;">${row.date}</td>
-                  <td style="padding: 10px;">${row.time}</td>
-                  <td style="padding: 10px; color: #60a5fa;">${row.direction}</td>
-                </tr>
-              `).join('')}
-            </table>
-            <h4 style="color: #fbbf24;">풍수학적 분석</h4>
-            <p style="white-space: pre-line;">${sajuResult.fengShuiThesis}</p>
-          </div>
-          
-          <div style="margin-bottom: 30px; page-break-before: always;">
-            <h2 style="border-left: 4px solid #333; padding-left: 10px;">6. 천기도사님과의 상담 기록</h2>
-            ${chatMessages.map(msg => `
-              <div style="margin: 15px 0; padding: 15px; background: ${msg.role === 'user' ? '#e8e8e8' : '#f8f5f0'}; border-radius: 8px; ${msg.role === 'user' ? 'margin-left: 50px;' : 'margin-right: 50px;'}">
-                <p style="font-weight: bold; color: ${msg.role === 'user' ? '#333' : '#8b6914'}; margin-bottom: 5px;">
-                  ${msg.role === 'user' ? '❓ 질문' : '🔮 천기도사'}
-                </p>
-                <p style="white-space: pre-line; text-align: justify;">${msg.text}</p>
-              </div>
-            `).join('')}
-          </div>
-          
-          <div style="text-align: center; margin-top: 50px; padding-top: 20px; border-top: 2px solid #333;">
-            <p style="font-size: 16px; font-weight: bold;">천기누설 운명 감정원</p>
-            <p style="color: #666;">${new Date().toLocaleDateString('ko-KR')} 작성</p>
-          </div>
-        </div>
-      `;
-      
-      document.body.appendChild(pdfContainer);
-      
-      const canvas = await html2canvas(pdfContainer, { 
-        scale: 2, 
+      const canvas = await html2canvas(element, { 
+        scale: 2,
         useCORS: true, 
-        backgroundColor: "#ffffff",
+        backgroundColor: "#F7F5F0",
         logging: false,
-        allowTaint: true
+        allowTaint: true,
+        windowWidth: element.scrollWidth,
+        windowHeight: element.scrollHeight,
+        scrollX: 0,
+        scrollY: 0
       });
       
-      document.body.removeChild(pdfContainer);
+      document.body.removeChild(loadingMsg);
       
-      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      const imgData = canvas.toDataURL('image/jpeg', 0.92);
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = pdfWidth;
+      const imgWidth = pdfWidth - 10; // 좌우 여백 5mm
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       
       let heightLeft = imgHeight;
-      let position = 0;
+      let position = 5; // 상단 여백
       let pageCount = 0;
       
       // 첫 페이지
-      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+      pdf.addImage(imgData, 'JPEG', 5, position, imgWidth, imgHeight);
       heightLeft -= pdfHeight;
       pageCount++;
       
       // 추가 페이지
       while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
+        position = heightLeft - imgHeight + 5;
         pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+        pdf.addImage(imgData, 'JPEG', 5, position, imgWidth, imgHeight);
         heightLeft -= pdfHeight;
         pageCount++;
       }
       
-      pdf.save(`${input.name}_천기누설_통합감정서.pdf`);
-      alert(`PDF 다운로드 완료! (총 ${pageCount} 페이지)`);
+      pdf.save(`${input.name}_천기누설_운명감정서.pdf`);
+      alert(`🎉 PDF 다운로드 완료!\n\n총 ${pageCount} 페이지의 상세한 감정서가 저장되었습니다.`);
     } catch (err) { 
       console.error('PDF 생성 오류:', err);
       alert("PDF 다운로드 실패. 텍스트 파일로 다운로드를 시도해주세요."); 
@@ -737,7 +629,7 @@ ${sajuResult.fengShuiThesis}
       
       {/* MAIN RESULT VIEW */}
       {sajuResult && (
-        <div className="max-w-4xl mx-auto p-4 md:p-8 space-y-16 pb-32">
+        <div ref={fullReportRef} className="max-w-4xl mx-auto p-4 md:p-8 space-y-16 pb-32">
           
           <section className="animate-fade-in-up">
             <div className="flex items-center mb-6 border-b border-gray-300 pb-2 justify-between">
