@@ -226,28 +226,26 @@ export const analyzeSaju = async (input: UserInput): Promise<SajuAnalysisResult>
   const dayPillar = createPillar(dayStem, dayBranch);
   const hourPillar = createPillar(hourStem, hourBranch);
 
-  // 4. Calculate Daewun (10-year cycles) - EXTENDED to 121 years logic
+  // 4. Calculate Daewun (10-year cycles) - Wonkwang style with year display
   const yun = baZi.getYun(input.gender === 'male' ? 1 : 0);
   const daewunList: CycleItem[] = [];
   const daewunObjs = yun.getDaYun();
+  const startAge = yun.getStartYear(); // Age when first Daewun starts
   
-  // Calculate Daewun
-  // Safety: Daewun usually doesn't fail, but we'll safeguard loop.
-  for (let i = 0; i < daewunObjs.length && i < 15; i++) {
+  // Calculate Daewun with start years
+  for (let i = 0; i < daewunObjs.length && i < 13; i++) {
     try {
       const dy = daewunObjs[i];
       const dyStartAge = dy.getStartAge();
-      // If Daewun goes beyond reasonable age, stop? 
-      // 121 is the requested limit.
-      
-      const label = i === 0 && dyStartAge === 0 ? `0.6 ~ ${dyStartAge + 9}` : `${dyStartAge} ~ ${dyStartAge + 9}`;
       const ganZhi = dy.getGanZhi();
+      const startYear = year + dyStartAge;
       
       daewunList.push({
-        age: label,
+        age: dyStartAge === 0 ? 0.6 : dyStartAge,
         ganji: ganZhi,
         ganjiKorean: getGanjiKorean(ganZhi),
-        tenGod: getTenGod(dayStem, ganZhi.charAt(0))
+        tenGod: getTenGod(dayStem, ganZhi.charAt(0)),
+        startYear: startYear
       });
       
       if (dyStartAge > 121) break; 
@@ -257,56 +255,52 @@ export const analyzeSaju = async (input: UserInput): Promise<SajuAnalysisResult>
     }
   }
 
-  // 5. Calculate Saewun (Yearly Luck) - Extended to 121 years
+  // 5. Calculate Saewun (Yearly Luck) - with calendar year
   const saewunList: CycleItem[] = [];
-  for (let i = 0; i <= 121; i++) {
-    const currentYear = year + i;
-    // library safety limit: usually 2100 is safe. 
-    // If the year exceeds 2100, lunar-javascript might fail or return incorrect data depending on version.
-    // We will try; if fail, break.
-    if (currentYear > 2100) break;
+  const currentYear = new Date().getFullYear();
+  // Show 10 years before and 10 years after current year (total ~21 years visible initially)
+  for (let i = 0; i <= 80; i++) {
+    const targetYear = year + i;
+    if (targetYear > 2100) break;
 
     try {
-      // Use middle of the year to ensure we get that year's GanZhi safely
-      const l = Lunar.fromYmd(currentYear, 6, 1);
+      const l = Lunar.fromYmd(targetYear, 6, 1);
       const ganZhi = l.getYearInGanZhi();
       saewunList.push({
-        age: `${i + 1}`, // Age
+        age: i + 1, // Age (Korean age)
         ganji: ganZhi,
         ganjiKorean: getGanjiKorean(ganZhi),
-        tenGod: getTenGod(dayStem, ganZhi.charAt(0))
+        tenGod: getTenGod(dayStem, ganZhi.charAt(0)),
+        year: targetYear
       });
     } catch (e) {
-      console.warn(`Saewun calculation stopped at year ${currentYear}:`, e);
+      console.warn(`Saewun calculation stopped at year ${targetYear}:`, e);
       break;
     }
   }
 
-  // 6. Calculate Wolwun (Monthly Luck) - 2025~2027 (Strict Solar Term Standard)
+  // 6. Calculate Wolwun (Monthly Luck) - Current year focused
   const wolwunList: CycleItem[] = [];
+  const wolwunYear = currentYear; // Focus on current year
   
-  // Loop through Gregorian months from 2025-01 to 2027-12
-  for (let y = 2025; y <= 2027; y++) {
-    for (let m = 1; m <= 12; m++) {
-      try {
-        // Use 15th of month to determine the Solar Term Month Pillar dominance
-        const s = Solar.fromYmd(y, m, 15);
-        const l = s.getLunar();
-        const bz = l.getEightChar();
-        const monthGan = bz.getMonthGan();
-        const monthZhi = bz.getMonthZhi();
-        const mGanZhi = monthGan + monthZhi;
+  for (let m = 1; m <= 12; m++) {
+    try {
+      const s = Solar.fromYmd(wolwunYear, m, 15);
+      const l = s.getLunar();
+      const bz = l.getEightChar();
+      const monthGan = bz.getMonthGan();
+      const monthZhi = bz.getMonthZhi();
+      const mGanZhi = monthGan + monthZhi;
 
-        wolwunList.push({
-          age: `${y}.${m}`,
-          ganji: mGanZhi,
-          ganjiKorean: getGanjiKorean(mGanZhi),
-          tenGod: getTenGod(dayStem, monthGan)
-        });
-      } catch (e) {
-        console.warn(`Wolwun error at ${y}.${m}`, e);
-        // Continue if one month fails? Better to show gap than crash.
-      }
+      wolwunList.push({
+        age: m, // Month number
+        ganji: mGanZhi,
+        ganjiKorean: getGanjiKorean(mGanZhi),
+        tenGod: getTenGod(dayStem, monthGan),
+        year: wolwunYear
+      });
+    } catch (e) {
+      console.warn(`Wolwun error at ${wolwunYear}.${m}`, e);
     }
   }
 

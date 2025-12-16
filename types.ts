@@ -23,6 +23,8 @@ export interface CycleItem {
   ganji: string; // Hanja e.g. 甲子
   ganjiKorean: string; // Korean e.g. 갑자
   tenGod: string; // Simplified Ten God for the stem
+  year?: number; // Calendar year for display
+  startYear?: number; // For Daewun start year
 }
 
 export interface SajuAnalysisResult {
