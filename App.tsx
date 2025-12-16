@@ -8,28 +8,40 @@ import html2canvas from "html2canvas";
 // @ts-ignore
 import jsPDF from "jspdf";
 
+// Helper to deduce Element Color for Wonkwang Style
+const getElementBgColor = (char: string) => {
+  if ("甲乙寅卯".includes(char)) return "bg-green-100 text-green-900 border-green-200";
+  if ("丙丁巳午".includes(char)) return "bg-red-100 text-red-900 border-red-200";
+  if ("戊己辰戌丑未".includes(char)) return "bg-yellow-100 text-yellow-900 border-yellow-200";
+  if ("庚辛申酉".includes(char)) return "bg-gray-100 text-gray-900 border-gray-300";
+  if ("壬癸亥子".includes(char)) return "bg-blue-100 text-blue-900 border-blue-200";
+  return "bg-white text-gray-900 border-gray-200";
+};
+
 // Detailed Cycle Table matching the request
 const CycleTable: React.FC<{ title: string, data: CycleItem[], reversed?: boolean }> = ({ title, data, reversed = false }) => {
+  // Safe reverse for display if needed
+  const displayData = reversed ? [...data].reverse() : data;
+
   return (
     <div className="mb-8">
       <h4 className="font-serif font-bold text-lg mb-3 text-oriental-black border-l-4 border-oriental-gold pl-3">{title}</h4>
-      {/* Container forcing scroll */}
       <div className="w-full overflow-x-auto pb-4 scrollbar-thin">
-        <div className={`flex ${reversed ? 'flex-row-reverse' : 'flex-row'} min-w-max gap-0.5`}>
-          {data.map((item, idx) => (
+        <div className="flex flex-row min-w-max gap-0.5">
+          {displayData.map((item, idx) => (
             <div key={idx} className="flex flex-col items-center w-14 border border-gray-400 bg-gray-50 shrink-0">
                {/* Header (Age/Year) */}
               <div className="w-full bg-white text-[11px] text-center py-1 font-bold text-black border-b border-gray-300">
                 {item.age}
               </div>
                {/* Ten God */}
-               <div className="w-full bg-gray-200 text-[10px] text-center py-0.5 border-b border-gray-300">
+               <div className="w-full bg-gray-100 text-[10px] text-center py-0.5 border-b border-gray-300 whitespace-nowrap overflow-hidden text-ellipsis px-0.5">
                 {item.tenGod}
                </div>
               {/* Ganji */}
-              <div className="flex flex-col items-center py-1 bg-white">
-                 <span className="text-xl font-serif font-bold leading-none">{item.ganji.charAt(0)}</span>
-                 <span className="text-xl font-serif font-bold leading-none mt-1">{item.ganji.charAt(1)}</span>
+              <div className="flex flex-col items-center py-1 bg-white w-full">
+                 <span className={`text-xl font-serif font-bold leading-none w-full text-center ${getElementBgColor(item.ganji.charAt(0)).split(' ')[1]}`}>{item.ganji.charAt(0)}</span>
+                 <span className={`text-xl font-serif font-bold leading-none mt-1 w-full text-center ${getElementBgColor(item.ganji.charAt(1)).split(' ')[1]}`}>{item.ganji.charAt(1)}</span>
               </div>
               <span className="text-[10px] text-gray-500 pb-1">{item.ganjiKorean}</span>
             </div>
@@ -41,44 +53,50 @@ const CycleTable: React.FC<{ title: string, data: CycleItem[], reversed?: boolea
 };
 
 // Specialized Wolwun Table to exactly match Wonkwang Style
-// Features: Boxed cells, Year.Month header, Ten God, Vertical Ganji, Small Korean Branch
-// Ordering: Right-to-Left (Latest dates on Left, Oldest on Right? No, screenshot shows 2026.2 on left, 2025.1 on right)
-// The screenshot shows descending order from Left to Right (2026 -> 2025).
-// BUT typical "past to future" is Left to Right.
-// The screenshot is likely: [Future] <--- [Present] <--- [Past] if scrolling left, or just a descending list.
-// The user said: "2025.1 is on the far right". "2026.2 is on the left".
-// This means the array is sorted Ascending (2025 -> 2026), but displayed flex-row-reverse?
-// Let's look at the data structure. Data comes 2025.1 ... 2027.12.
-// If we use flex-row-reverse, the LAST item (2027.12) is on the LEFT. The FIRST item (2025.1) is on the RIGHT.
-// This matches the user description: "2025.1 is on the right".
 const WolwunTable: React.FC<{ title: string, data: CycleItem[] }> = ({ title, data }) => {
+  // CRITICAL FIX: Reverse the data array instead of using flex-row-reverse.
+  // flex-row-reverse with overflow-x-auto often causes content to be clipped to the left and unreachable.
+  // We want Descending Order (Future -> Past) from Left to Right.
+  // The input 'data' is Ascending (2025.1 -> 2027.12).
+  // So we reverse it -> [2027.12, ..., 2025.1].
+  // Rendered L->R, this puts 2027 on Left, 2025 on Right.
+  const displayData = [...data].reverse();
+
   return (
     <div className="mb-8">
       <h4 className="font-serif font-bold text-lg mb-3 text-oriental-black border-l-4 border-oriental-gold pl-3">{title}</h4>
       <div className="w-full overflow-x-auto pb-4 scrollbar-thin">
-        {/* flex-row-reverse puts the end of the array on the left, start of array on right */}
-        <div className="flex flex-row-reverse min-w-max"> 
-          {data.map((item, idx) => (
-             <div key={idx} className="flex flex-col w-12 border-r border-t border-b border-gray-400 first:border-l bg-white shrink-0">
-                {/* 1. Header: Year.Month */}
-                <div className="text-[10px] font-bold text-center py-1 border-b border-gray-300 bg-white">
-                  {item.age}
-                </div>
-                {/* 2. Ten God */}
-                <div className="text-[9px] text-center py-0.5 bg-gray-100 border-b border-gray-300 text-gray-700">
-                  {item.tenGod}
-                </div>
-                {/* 3. Ganji Vertical */}
-                <div className="flex flex-col items-center py-2 space-y-1">
-                  <span className="text-lg font-serif font-bold leading-none">{item.ganji.charAt(0)}</span>
-                  <span className="text-lg font-serif font-bold leading-none">{item.ganji.charAt(1)}</span>
-                </div>
-                {/* 4. Korean Branch */}
-                <div className="text-[9px] text-center pb-1 text-gray-500">
-                  {item.ganjiKorean}
-                </div>
-             </div>
-          ))}
+        <div className="flex flex-row min-w-max"> 
+          {displayData.map((item, idx) => {
+             const stemColorClass = getElementBgColor(item.ganji.charAt(0));
+             const branchColorClass = getElementBgColor(item.ganji.charAt(1));
+
+             return (
+               <div key={idx} className="flex flex-col w-12 border-r border-t border-b border-gray-400 first:border-l bg-white shrink-0">
+                  {/* 1. Header: Year.Month */}
+                  <div className="text-[10px] font-bold text-center py-1 border-b border-gray-300 bg-white">
+                    {item.age}
+                  </div>
+                  {/* 2. Ten God */}
+                  <div className="text-[9px] text-center py-0.5 bg-gray-50 border-b border-gray-300 text-gray-700 whitespace-nowrap overflow-hidden">
+                    {item.tenGod}
+                  </div>
+                  {/* 3. Ganji Vertical with Colors */}
+                  <div className="flex flex-col items-center py-1 space-y-0.5 w-full flex-1 justify-center">
+                    <div className={`w-full text-center py-0.5 ${stemColorClass}`}>
+                       <span className="text-lg font-serif font-bold leading-none">{item.ganji.charAt(0)}</span>
+                    </div>
+                    <div className={`w-full text-center py-0.5 ${branchColorClass}`}>
+                       <span className="text-lg font-serif font-bold leading-none">{item.ganji.charAt(1)}</span>
+                    </div>
+                  </div>
+                  {/* 4. Korean Branch */}
+                  <div className="text-[9px] text-center pb-1 text-gray-500 pt-1 border-t border-gray-100">
+                    {item.ganjiKorean}
+                  </div>
+               </div>
+             );
+          })}
         </div>
       </div>
     </div>
@@ -100,18 +118,18 @@ const ExactPillarCell: React.FC<{ pillar: Pillar, label: string }> = ({ pillar, 
         {/* Stem Box */}
         <div className="flex flex-col items-center">
            <span className="text-xs font-bold text-gray-600 mb-0.5">{pillar.stemTenGod}</span>
-           <div className="w-12 h-12 border border-gray-300 flex items-center justify-center bg-white shadow-sm relative">
+           <div className={`w-12 h-12 border flex items-center justify-center shadow-sm relative ${getElementBgColor(pillar.stem)}`}>
              <span className="font-serif text-3xl font-bold z-10">{pillar.stem}</span>
              {/* Small Korean */}
-             <span className="absolute bottom-0 right-0 text-[9px] text-gray-400 p-0.5">{pillar.stemKorean}</span>
+             <span className="absolute bottom-0 right-0 text-[9px] text-gray-500 p-0.5 opacity-70">{pillar.stemKorean}</span>
            </div>
         </div>
 
         {/* Branch Box */}
         <div className="flex flex-col items-center">
-           <div className="w-12 h-12 border border-gray-300 flex items-center justify-center bg-white shadow-sm relative">
+           <div className={`w-12 h-12 border flex items-center justify-center shadow-sm relative ${getElementBgColor(pillar.branch)}`}>
              <span className="font-serif text-3xl font-bold z-10">{pillar.branch}</span>
-             <span className="absolute bottom-0 right-0 text-[9px] text-gray-400 p-0.5">{pillar.branchKorean}</span>
+             <span className="absolute bottom-0 right-0 text-[9px] text-gray-500 p-0.5 opacity-70">{pillar.branchKorean}</span>
            </div>
            <span className="text-xs font-bold text-gray-600 mt-0.5">{pillar.branchTenGod}</span>
         </div>

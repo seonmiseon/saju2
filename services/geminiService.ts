@@ -85,13 +85,13 @@ function getGanjiKorean(ganji: string): string {
 function getApiKey(userKey?: string): string | undefined {
   if (userKey && userKey.trim().length > 0) return userKey;
   try {
-    // @ts-ignore - Vite env variables
-    if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_GEMINI_API_KEY) {
+    // @ts-ignore
+    if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
       // @ts-ignore
-      return import.meta.env.VITE_GEMINI_API_KEY;
+      return process.env.API_KEY;
     }
   } catch (e) {
-    // Ignore error if import.meta is undefined
+    // Ignore error if process is undefined
   }
   return undefined;
 }
