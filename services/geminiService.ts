@@ -76,6 +76,9 @@ function getTenGod(dayStem: string, target: string): string {
 }
 
 function getGanjiKorean(ganji: string): string {
+  if (!ganji || typeof ganji !== 'string' || ganji.length < 2) {
+    return '';
+  }
   const stem = ganji.charAt(0);
   const branch = ganji.charAt(1);
   return getKoreanChar(stem) + getKoreanChar(branch);
@@ -317,10 +320,25 @@ export const analyzeSaju = async (input: UserInput): Promise<SajuAnalysisResult>
   const daewunObjs = yun.getDaYun();
   const startAge = yun.getStartYear(); // Age when first Daewun starts
   
-  // 첫 번째 대운 정보 가져오기
-  const firstDaewun = daewunObjs[0];
-  const firstAge = firstDaewun ? firstDaewun.getStartAge() : 1;
-  const firstGanZhi = firstDaewun ? firstDaewun.getGanZhi() : monthStem + monthBranch;
+  // 첫 번째 대운 정보 가져오기 - 안전하게 처리
+  const firstDaewun = daewunObjs && daewunObjs.length > 0 ? daewunObjs[0] : null;
+  let firstAge = 1;
+  let firstGanZhi = monthStem + monthBranch; // 기본값: 월주
+  
+  try {
+    if (firstDaewun) {
+      const tempAge = firstDaewun.getStartAge();
+      if (typeof tempAge === 'number') {
+        firstAge = tempAge;
+      }
+      const tempGanZhi = firstDaewun.getGanZhi();
+      if (typeof tempGanZhi === 'string' && tempGanZhi.length >= 2) {
+        firstGanZhi = tempGanZhi;
+      }
+    }
+  } catch (e) {
+    console.warn('First daewun parsing error, using defaults:', e);
+  }
   
   // 대운 순행/역행 방향 결정
   // 남자 양년생, 여자 음년생 = 순행 (월주에서 다음 간지로)
@@ -330,9 +348,9 @@ export const analyzeSaju = async (input: UserInput): Promise<SajuAnalysisResult>
   const isMale = input.gender === 'male';
   const isForward = (isMale && isYangYear) || (!isMale && !isYangYear);
   
-  // 월주의 간지 인덱스
-  let currentGanIdx = GAN.indexOf(monthStem);
-  let currentZhiIdx = ZHI.indexOf(monthBranch);
+  // 첫 번째 대운의 간지 인덱스
+  const firstGanIdx = GAN.indexOf(firstGanZhi.charAt(0));
+  const firstZhiIdx = ZHI.indexOf(firstGanZhi.charAt(1));
   
   // 121세까지 대운 생성 (약 13개)
   for (let i = 0; i <= 13; i++) {
@@ -343,17 +361,17 @@ export const analyzeSaju = async (input: UserInput): Promise<SajuAnalysisResult>
     // 간지 계산
     let ganIdx, zhiIdx;
     if (i === 0) {
-      // 첫 대운은 라이브러리에서 가져온 값 사용
-      ganIdx = GAN.indexOf(firstGanZhi.charAt(0));
-      zhiIdx = ZHI.indexOf(firstGanZhi.charAt(1));
+      // 첫 대운은 계산된 값 사용
+      ganIdx = firstGanIdx;
+      zhiIdx = firstZhiIdx;
     } else {
       // 이후 대운은 순행/역행에 따라 계산
       if (isForward) {
-        ganIdx = (GAN.indexOf(firstGanZhi.charAt(0)) + i) % 10;
-        zhiIdx = (ZHI.indexOf(firstGanZhi.charAt(1)) + i) % 12;
+        ganIdx = (firstGanIdx + i) % 10;
+        zhiIdx = (firstZhiIdx + i) % 12;
       } else {
-        ganIdx = (GAN.indexOf(firstGanZhi.charAt(0)) - i + 100) % 10;
-        zhiIdx = (ZHI.indexOf(firstGanZhi.charAt(1)) - i + 120) % 12;
+        ganIdx = (firstGanIdx - i + 100) % 10;
+        zhiIdx = (firstZhiIdx - i + 120) % 12;
       }
     }
     
