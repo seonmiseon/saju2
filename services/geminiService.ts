@@ -317,28 +317,56 @@ export const analyzeSaju = async (input: UserInput): Promise<SajuAnalysisResult>
   const daewunObjs = yun.getDaYun();
   const startAge = yun.getStartYear(); // Age when first Daewun starts
   
-  // Calculate Daewun - 121세까지 모든 대운 계산
-  for (let i = 0; i < daewunObjs.length; i++) {
-    try {
-      const dy = daewunObjs[i];
-      const dyStartAge = dy.getStartAge();
-      const ganZhi = dy.getGanZhi();
-      const startYear = year + dyStartAge;
-      
-      // 121세까지 표시
-      if (dyStartAge > 130) break;
-      
-      daewunList.push({
-        age: dyStartAge === 0 ? 0.6 : dyStartAge,
-        ganji: ganZhi,
-        ganjiKorean: getGanjiKorean(ganZhi),
-        tenGod: getTenGod(dayStem, ganZhi.charAt(0)),
-        startYear: startYear
-      });
-    } catch (e) {
-      console.warn("Daewun error", e);
-      break;
+  // 첫 번째 대운 정보 가져오기
+  const firstDaewun = daewunObjs[0];
+  const firstAge = firstDaewun ? firstDaewun.getStartAge() : 1;
+  const firstGanZhi = firstDaewun ? firstDaewun.getGanZhi() : monthStem + monthBranch;
+  
+  // 대운 순행/역행 방향 결정
+  // 남자 양년생, 여자 음년생 = 순행 (월주에서 다음 간지로)
+  // 남자 음년생, 여자 양년생 = 역행 (월주에서 이전 간지로)
+  const yearStemIdx = GAN.indexOf(yearStem);
+  const isYangYear = yearStemIdx % 2 === 0; // 갑병무경임 = 양
+  const isMale = input.gender === 'male';
+  const isForward = (isMale && isYangYear) || (!isMale && !isYangYear);
+  
+  // 월주의 간지 인덱스
+  let currentGanIdx = GAN.indexOf(monthStem);
+  let currentZhiIdx = ZHI.indexOf(monthBranch);
+  
+  // 121세까지 대운 생성 (약 13개)
+  for (let i = 0; i <= 13; i++) {
+    const age = i === 0 ? (firstAge === 0 ? 0.6 : firstAge) : (firstAge + (i * 10));
+    
+    if (age > 130) break;
+    
+    // 간지 계산
+    let ganIdx, zhiIdx;
+    if (i === 0) {
+      // 첫 대운은 라이브러리에서 가져온 값 사용
+      ganIdx = GAN.indexOf(firstGanZhi.charAt(0));
+      zhiIdx = ZHI.indexOf(firstGanZhi.charAt(1));
+    } else {
+      // 이후 대운은 순행/역행에 따라 계산
+      if (isForward) {
+        ganIdx = (GAN.indexOf(firstGanZhi.charAt(0)) + i) % 10;
+        zhiIdx = (ZHI.indexOf(firstGanZhi.charAt(1)) + i) % 12;
+      } else {
+        ganIdx = (GAN.indexOf(firstGanZhi.charAt(0)) - i + 100) % 10;
+        zhiIdx = (ZHI.indexOf(firstGanZhi.charAt(1)) - i + 120) % 12;
+      }
     }
+    
+    const ganZhi = GAN[ganIdx] + ZHI[zhiIdx];
+    const startYear = year + Math.floor(age);
+    
+    daewunList.push({
+      age: age,
+      ganji: ganZhi,
+      ganjiKorean: getGanjiKorean(ganZhi),
+      tenGod: getTenGod(dayStem, ganZhi.charAt(0)),
+      startYear: startYear
+    });
   }
 
   // 5. Calculate Saewun (Yearly Luck) - with calendar year
