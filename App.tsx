@@ -447,24 +447,132 @@ const App: React.FC = () => {
             />
           </section>
 
-          <section className="bg-white p-8 rounded-xl shadow-sm border-l-4 border-gray-800"><h2 className="text-2xl font-serif font-bold mb-6">2. 타고난 기질과 운명</h2><p className="leading-8 text-gray-800 text-justify whitespace-pre-line">{sajuResult.dayMasterReading}</p></section>
-          
-          <section className="bg-oriental-paper p-8 rounded-xl border border-oriental-gold shadow-md relative overflow-hidden">
-            <h2 className="text-2xl font-serif font-bold mb-6 text-oriental-gold">3. 도사님의 개운 비책</h2>
-            <div className="bg-white/80 p-6 rounded-lg mb-6 backdrop-blur-sm"><div className="text-center font-bold text-oriental-red text-xl mb-4">필요한 기운: {sajuResult.missingElements.map(m => m.element).join(', ')}</div><p className="leading-relaxed text-gray-800 text-center font-medium">{sajuResult.chaeumAdvice.summary}</p></div>
-            <div className="grid grid-cols-3 gap-2 text-center text-sm"><div className="bg-white p-3 rounded shadow-sm"><div className="text-gray-500 mb-1">행운의 색</div><div className="font-bold">{sajuResult.chaeumAdvice.color}</div></div><div className="bg-white p-3 rounded shadow-sm"><div className="text-gray-500 mb-1">대박 방위</div><div className="font-bold">{sajuResult.chaeumAdvice.direction}</div></div><div className="bg-white p-3 rounded shadow-sm"><div className="text-gray-500 mb-1">개운 아이템</div><div className="font-bold">{sajuResult.chaeumAdvice.items}</div></div></div>
+          {/* 2. 타고난 기질 */}
+          <section className="bg-white p-6 md:p-8 rounded-xl shadow-sm border-l-4 border-gray-800">
+            <h2 className="text-2xl font-serif font-bold mb-6">2. 타고난 기질과 운명</h2>
+            <p className="leading-8 text-gray-800 text-justify whitespace-pre-line">{sajuResult.dayMasterReading}</p>
           </section>
+          
+          {/* 3. 개운 비책 (대박의 열쇠) */}
+          <section className="bg-[#FFF8F0] p-6 md:p-8 rounded-xl border border-[#E8D4C0] shadow-md">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-2xl">🔑</span>
+              <h2 className="text-2xl font-serif font-bold text-[#8B6914]">3. 도사님의 개운 비책 (대박의 열쇠)</h2>
+            </div>
+            <p className="text-gray-600 text-sm mb-6">부족한 오행을 채워 흉을 길로 바꾸는 비법입니다.</p>
 
-          <section className="bg-blue-50 p-8 rounded-xl border border-blue-100 shadow-sm">
-            <h2 className="text-2xl font-serif font-bold mb-6 text-blue-900">4. 맞춤형 건강 처방 (전문의학박사)</h2>
-            <div className="space-y-6">
-              <div className="bg-white p-5 rounded-lg border-l-4 border-blue-500 shadow-sm"><h3 className="font-bold text-lg mb-2 text-gray-800">취약 장기 및 증상</h3><p className="text-gray-600 mb-2">⚠️ {sajuResult.healthAnalysis.weakOrgans}</p><p className="text-sm">{sajuResult.healthAnalysis.symptoms}</p></div>
-              <div className="bg-white p-5 rounded-lg shadow-sm"><h3 className="font-bold text-lg mb-2 text-gray-800">전문의 상세 처방</h3><p className="text-justify whitespace-pre-line">{sajuResult.healthAnalysis.medicalAdvice}</p></div>
-              <div className="bg-green-50 p-5 rounded-lg border border-green-100"><h3 className="font-bold text-lg mb-2 text-green-800">🥗 식이요법</h3><p className="text-sm">{sajuResult.healthAnalysis.foodRecommendation}</p></div>
+            {/* 반드시 채워야 할 기운 */}
+            <div className="bg-white p-6 rounded-lg border border-[#E8D4C0] mb-6 text-center">
+              <p className="text-gray-600 mb-2">반드시 채워야 할 기운</p>
+              <p className="text-sm text-gray-500 mb-3">1순위 · 2순위</p>
+              <p className="text-4xl font-bold text-[#C5A059]">
+                {sajuResult.missingElements.map(m => m.element.replace('(', '').replace(')', '').split('')[0]).join(' · ')}
+              </p>
+            </div>
+
+            {/* 개운 조언 요약 */}
+            <div className="bg-white/80 p-6 rounded-lg mb-6">
+              <p className="leading-8 text-gray-800 text-justify whitespace-pre-line">{sajuResult.chaeumAdvice.summary}</p>
+            </div>
+
+            {/* 3가지 개운법 카드 */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-2xl">🎨</span>
+                  <h4 className="font-bold text-gray-800">행운의 색</h4>
+                </div>
+                <p className="font-bold text-lg text-[#C5A059] mb-3">{sajuResult.chaeumAdvice.color}</p>
+                {sajuResult.chaeumAdvice.colorAdvice && (
+                  <p className="text-gray-600 text-sm leading-6">{sajuResult.chaeumAdvice.colorAdvice}</p>
+                )}
+              </div>
+              <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-2xl">🧭</span>
+                  <h4 className="font-bold text-gray-800">대박 방위</h4>
+                </div>
+                <p className="font-bold text-lg text-[#C5A059] mb-3">{sajuResult.chaeumAdvice.direction}</p>
+                {sajuResult.chaeumAdvice.directionAdvice && (
+                  <p className="text-gray-600 text-sm leading-6">{sajuResult.chaeumAdvice.directionAdvice}</p>
+                )}
+              </div>
+              <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-2xl">🏺</span>
+                  <h4 className="font-bold text-gray-800">개운 아이템</h4>
+                </div>
+                <p className="font-bold text-lg text-[#C5A059] mb-3">{sajuResult.chaeumAdvice.items}</p>
+                {sajuResult.chaeumAdvice.itemAdvice && (
+                  <p className="text-gray-600 text-sm leading-6">{sajuResult.chaeumAdvice.itemAdvice}</p>
+                )}
+              </div>
             </div>
           </section>
 
-          <section><h2 className="text-2xl font-serif font-bold mb-6 border-b-2 border-red-500 inline-block">5. 2026년 대박 총운</h2><div className="bg-white p-8 rounded-xl shadow-lg border-t-4 border-red-500"><p className="text-lg leading-8 text-gray-800 text-justify mb-8 font-medium">{sajuResult.fortune2026.overall}</p><div className="grid grid-cols-1 md:grid-cols-2 gap-6">{['wealth', 'career', 'love', 'health'].map(k => <div key={k} className="bg-gray-50 p-4 rounded-lg"><p className="text-sm text-gray-600 text-justify">{sajuResult.fortune2026[k as keyof typeof sajuResult.fortune2026]}</p></div>)}</div></div></section>
+          {/* 4. 건강 처방 */}
+          <section className="bg-blue-50 p-6 md:p-8 rounded-xl border border-blue-100 shadow-sm">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-2xl">🩺</span>
+              <h2 className="text-2xl font-serif font-bold text-blue-900">4. 맞춤형 건강 처방 (Medical Report)</h2>
+            </div>
+            <p className="text-gray-500 text-sm mb-6">의학 전문의가 분석한 사주 체질과 관리법입니다.</p>
+            
+            <div className="space-y-6">
+              {/* 취약 장기 */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm">
+                  <h3 className="font-bold text-lg mb-3 text-red-600 flex items-center gap-2">⚠️ 취약 장기</h3>
+                  <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-line">{sajuResult.healthAnalysis.weakOrgans}</p>
+                </div>
+                <div className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm">
+                  <h3 className="font-bold text-lg mb-3 text-orange-600 flex items-center gap-2">🩺 예상 증상</h3>
+                  <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-line">{sajuResult.healthAnalysis.symptoms}</p>
+                </div>
+              </div>
+              {/* 전문의 상세 처방 */}
+              <div className="bg-white p-6 rounded-lg border border-blue-200 shadow-sm">
+                <h3 className="font-bold text-lg mb-4 text-blue-800 flex items-center gap-2">📋 전문의 상세 처방</h3>
+                <p className="text-gray-700 text-sm leading-8 whitespace-pre-line text-justify">{sajuResult.healthAnalysis.medicalAdvice}</p>
+              </div>
+              {/* 추천 식이요법 */}
+              <div className="bg-green-50 p-6 rounded-lg border border-green-200">
+                <h3 className="font-bold text-lg mb-4 text-green-800 flex items-center gap-2">🥗 추천 식이요법</h3>
+                <p className="text-gray-700 text-sm leading-7 whitespace-pre-line">{sajuResult.healthAnalysis.foodRecommendation}</p>
+              </div>
+            </div>
+          </section>
+
+          {/* 5. 2026년 운세 */}
+          <section className="bg-white p-6 md:p-8 rounded-xl shadow-lg border-t-4 border-red-500">
+            <h2 className="text-2xl font-serif font-bold mb-6 text-red-700">5. 2026년 (병오년) 대박 운세</h2>
+            
+            {/* 총운 */}
+            <div className="bg-red-50 p-6 rounded-lg border border-red-100 mb-6">
+              <h3 className="font-bold text-lg mb-3 text-red-800">🔥 총운</h3>
+              <p className="text-gray-800 leading-8 whitespace-pre-line text-justify">{sajuResult.fortune2026.overall}</p>
+            </div>
+
+            {/* 세부 운세 그리드 */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-yellow-50 p-5 rounded-lg border border-yellow-200">
+                <h4 className="font-bold mb-3 text-yellow-800 flex items-center gap-2">💰 재물운</h4>
+                <p className="text-gray-700 text-sm leading-7 whitespace-pre-line">{sajuResult.fortune2026.wealth}</p>
+              </div>
+              <div className="bg-blue-50 p-5 rounded-lg border border-blue-200">
+                <h4 className="font-bold mb-3 text-blue-800 flex items-center gap-2">💼 직업/사업운</h4>
+                <p className="text-gray-700 text-sm leading-7 whitespace-pre-line">{sajuResult.fortune2026.career}</p>
+              </div>
+              <div className="bg-pink-50 p-5 rounded-lg border border-pink-200">
+                <h4 className="font-bold mb-3 text-pink-700 flex items-center gap-2">💕 애정/가정운</h4>
+                <p className="text-gray-700 text-sm leading-7 whitespace-pre-line">{sajuResult.fortune2026.love}</p>
+              </div>
+              <div className="bg-green-50 p-5 rounded-lg border border-green-200">
+                <h4 className="font-bold mb-3 text-green-800 flex items-center gap-2">💪 건강운</h4>
+                <p className="text-gray-700 text-sm leading-7 whitespace-pre-line">{sajuResult.fortune2026.health}</p>
+              </div>
+            </div>
+          </section>
 
           <section className="bg-gray-900 text-gray-100 p-8 rounded-xl shadow-2xl"><h2 className="text-2xl font-serif font-bold mb-6 text-yellow-500">6. 귀인과 길일 (풍수지리)</h2><div className="mb-8"><table className="w-full text-sm text-left text-gray-300"><thead className="text-xs text-gray-400 uppercase bg-gray-800"><tr><th className="px-4 py-3">날짜</th><th className="px-4 py-3">시간</th><th className="px-4 py-3">방위</th></tr></thead><tbody className="divide-y divide-gray-700">{sajuResult.luckyTable.map((row, index) => <tr key={index}><td className="px-4 py-3 text-yellow-400 font-bold">{row.date}</td><td className="px-4 py-3">{row.time}</td><td className="px-4 py-3 text-blue-400">{row.direction}</td></tr>)}</tbody></table></div><div className="prose prose-invert max-w-none text-justify text-sm opacity-90"><h4 className="font-bold text-yellow-500 mb-2">풍수학적 분석</h4><p className="whitespace-pre-line">{sajuResult.fengShuiThesis}</p></div></section>
 

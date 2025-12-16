@@ -61,6 +61,9 @@ export interface SajuAnalysisResult {
     color: string;
     direction: string;
     items: string;
+    colorAdvice?: string;
+    directionAdvice?: string;
+    itemAdvice?: string;
   };
   healthAnalysis: {
     weakOrgans: string;
