@@ -865,8 +865,8 @@ ${sajuResult.fengShuiThesis}
 
           {/* 천기도사님 친견실 - 확장된 채팅 섹션 */}
           <section className="bg-white rounded-xl shadow-lg border-2 border-oriental-black overflow-hidden flex flex-col">
-            <div className="bg-oriental-black text-white p-4">
-              <h3 className="font-serif font-bold text-xl">🔮 천기도사님 親見室</h3>
+            <div className="bg-gradient-to-r from-gray-900 to-purple-900 text-white p-4">
+              <h3 className="font-serif font-bold text-xl">🔮 天氣道師 親見室 (천기도사 친견실)</h3>
               <p className="text-sm text-gray-300 mt-1">궁금한 사항을 물어보시면 상세히 답변해 드립니다.</p>
             </div>
             
@@ -882,7 +882,7 @@ ${sajuResult.fengShuiThesis}
                     {msg.role === 'model' && (
                       <div className="flex items-center gap-2 mb-2 text-amber-700 font-bold">
                         <span>🔮</span>
-                        <span>천기도사</span>
+                        <span>天氣道師 (천기도사)</span>
                       </div>
                     )}
                     <div className="whitespace-pre-wrap leading-relaxed">{msg.text}</div>
@@ -918,23 +918,25 @@ ${sajuResult.fengShuiThesis}
               </div>
             </div>
             
-            {/* 입력 폼 */}
-            <form onSubmit={handleChatSubmit} className="p-3 border-t bg-white flex space-x-2">
-              <input 
-                type="text" 
-                value={chatInput} 
-                onChange={e => setChatInput(e.target.value)} 
-                placeholder="질문을 입력하세요..." 
-                className="flex-1 px-4 py-3 border rounded-full focus:outline-none focus:ring-2 focus:ring-oriental-gold" 
-                disabled={isChatLoading} 
-              />
-              <button 
-                type="submit" 
-                className="bg-oriental-black text-white w-12 h-12 rounded-full flex items-center justify-center hover:bg-gray-800 transition-colors disabled:opacity-50"
-                disabled={isChatLoading || !chatInput.trim()}
-              >
-                ➤
-              </button>
+            {/* 입력 폼 - 고민 적는란에 placeholder 개선 */}
+            <form onSubmit={handleChatSubmit} className="p-4 border-t bg-white">
+              <div className="flex space-x-2">
+                <input 
+                  type="text" 
+                  value={chatInput} 
+                  onChange={e => setChatInput(e.target.value)} 
+                  placeholder="고민을 적어주세요 ex. 로또구입시기, 직장이직여부, 연애운, 재물운 등" 
+                  className="flex-1 px-4 py-3 border rounded-full focus:outline-none focus:ring-2 focus:ring-oriental-gold placeholder:text-gray-400 placeholder:opacity-60" 
+                  disabled={isChatLoading} 
+                />
+                <button 
+                  type="submit" 
+                  className="bg-oriental-black text-white w-12 h-12 rounded-full flex items-center justify-center hover:bg-gray-800 transition-colors disabled:opacity-50"
+                  disabled={isChatLoading || !chatInput.trim()}
+                >
+                  ➤
+                </button>
+              </div>
             </form>
           </section>
 

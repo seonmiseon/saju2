@@ -364,13 +364,37 @@ export const analyzeSaju = async (input: UserInput): Promise<SajuAnalysisResult>
     }
   }
 
-  // 6. Calculate Wolwun (Monthly Luck) - Current year focused
+  // 6. Calculate Wolwun (Monthly Luck) - 절기 기준으로 정확하게 계산
+  // 월운은 절기를 기준으로 바뀜 (입춘→인월, 경칩→묘월 등)
   const wolwunList: CycleItem[] = [];
-  const wolwunYear = currentYear; // Focus on current year
+  const wolwunYear = currentYear;
   
-  for (let m = 1; m <= 12; m++) {
+  // 절기 기반 월 간지 계산 - 각 월의 절입일 이후 날짜 사용
+  // 절입일: 대략적인 날짜 (정확한 절입일은 매년 다름)
+  const jieqiDates = [
+    { month: 1, day: 20 },  // 대한 이후 → 축월(丑月) 12월
+    { month: 2, day: 19 },  // 우수 이후 → 인월(寅月) 1월  
+    { month: 3, day: 21 },  // 춘분 이후 → 묘월(卯月) 2월
+    { month: 4, day: 20 },  // 곡우 이후 → 진월(辰月) 3월
+    { month: 5, day: 21 },  // 소만 이후 → 사월(巳月) 4월
+    { month: 6, day: 21 },  // 하지 이후 → 오월(午月) 5월
+    { month: 7, day: 23 },  // 대서 이후 → 미월(未月) 6월
+    { month: 8, day: 23 },  // 처서 이후 → 신월(申月) 7월
+    { month: 9, day: 23 },  // 추분 이후 → 유월(酉月) 8월
+    { month: 10, day: 23 }, // 상강 이후 → 술월(戌月) 9월
+    { month: 11, day: 22 }, // 소설 이후 → 해월(亥月) 10월
+    { month: 12, day: 22 }, // 동지 이후 → 자월(子月) 11월
+  ];
+  
+  // 월운 계산 (1월~12월)
+  for (let displayMonth = 1; displayMonth <= 12; displayMonth++) {
     try {
-      const s = Solar.fromYmd(wolwunYear, m, 15);
+      // 해당 월의 절입일 이후 날짜로 월 간지 계산
+      const jieqi = jieqiDates[displayMonth - 1];
+      const calcYear = displayMonth === 1 ? wolwunYear : wolwunYear;
+      const calcDay = jieqi.day + 3; // 절입일 며칠 후로 계산
+      
+      const s = Solar.fromYmd(calcYear, jieqi.month, Math.min(calcDay, 28));
       const l = s.getLunar();
       const bz = l.getEightChar();
       const monthGan = bz.getMonthGan();
@@ -378,14 +402,14 @@ export const analyzeSaju = async (input: UserInput): Promise<SajuAnalysisResult>
       const mGanZhi = monthGan + monthZhi;
 
       wolwunList.push({
-        age: m, // Month number
+        age: displayMonth, // 표시용 월 (1~12)
         ganji: mGanZhi,
         ganjiKorean: getGanjiKorean(mGanZhi),
         tenGod: getTenGod(dayStem, monthGan),
         year: wolwunYear
       });
     } catch (e) {
-      console.warn(`Wolwun error at ${wolwunYear}.${m}`, e);
+      console.warn(`Wolwun error at ${wolwunYear}.${displayMonth}`, e);
     }
   }
 
