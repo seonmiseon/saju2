@@ -281,6 +281,15 @@ const App: React.FC = () => {
   // New State for API Key UI
   const [isKeySaved, setIsKeySaved] = useState(false);
 
+  // localStorage에서 API 키 불러오기 (앱 시작 시)
+  useEffect(() => {
+    const savedApiKey = localStorage.getItem('gemini_api_key');
+    if (savedApiKey) {
+      setInput(prev => ({ ...prev, apiKey: savedApiKey }));
+      setIsKeySaved(true);
+    }
+  }, []);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setInput(prev => ({ ...prev, [name]: value }));
@@ -293,8 +302,17 @@ const App: React.FC = () => {
 
   const handleSaveKey = () => {
     if (input.apiKey && input.apiKey.trim().length > 0) {
+      // localStorage에 API 키 저장
+      localStorage.setItem('gemini_api_key', input.apiKey.trim());
       setIsKeySaved(true);
     }
+  };
+
+  // API 키 삭제 함수
+  const handleDeleteKey = () => {
+    localStorage.removeItem('gemini_api_key');
+    setInput(prev => ({ ...prev, apiKey: '' }));
+    setIsKeySaved(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -655,11 +673,18 @@ ${sajuResult.fengShuiThesis}
           </div>
           <form onSubmit={handleSubmit} className="w-full space-y-5 bg-white p-8 rounded-xl shadow-xl border border-oriental-gold/20">
             
-            {/* Custom API Key Section matching the requested design */}
+            {/* Custom API Key Section - localStorage 저장 */}
             <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm mb-6">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-lg">🔑</span>
-                <span className="font-bold text-gray-700 text-sm">Gemini API Key</span>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">🔑</span>
+                  <span className="font-bold text-gray-700 text-sm">Gemini API Key</span>
+                </div>
+                {isKeySaved && (
+                  <span className="text-green-600 text-xs font-bold flex items-center gap-1">
+                    ✔ 저장됨 (자동 불러옴)
+                  </span>
+                )}
               </div>
               <div className="flex gap-2">
                 <input
@@ -667,7 +692,7 @@ ${sajuResult.fengShuiThesis}
                   name="apiKey"
                   value={input.apiKey}
                   onChange={handleApiKeyChange}
-                  placeholder="•••••••••••••••••••••••••••"
+                  placeholder={isKeySaved ? "저장된 키가 있습니다" : "API 키를 입력하세요"}
                   className="flex-1 border border-gray-300 rounded p-2 text-sm focus:outline-none focus:border-oriental-gold tracking-widest h-10"
                 />
                 <button
@@ -677,12 +702,20 @@ ${sajuResult.fengShuiThesis}
                 >
                   저장
                 </button>
+                {isKeySaved && (
+                  <button
+                    type="button"
+                    onClick={handleDeleteKey}
+                    className="bg-gray-500 text-white font-bold px-3 rounded-md h-10 shadow-md hover:bg-gray-600 transition-colors text-sm"
+                    title="저장된 키 삭제"
+                  >
+                    🗑️
+                  </button>
+                )}
               </div>
-              {isKeySaved && (
-                <div className="text-green-500 text-xs mt-2 flex items-center font-bold">
-                  <span className="mr-1">✔</span> 저장됨
-                </div>
-              )}
+              <p className="text-gray-400 text-xs mt-2">
+                💡 API 키는 브라우저에 저장되어 다음에 자동으로 불러옵니다. (선택사항)
+              </p>
             </div>
 
             <div><label className="block text-xs font-bold text-gray-500 uppercase mb-1">성명 (姓名)</label><input type="text" name="name" value={input.name} onChange={handleInputChange} placeholder="홍길동" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg" required /></div>
