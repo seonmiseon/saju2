@@ -69,45 +69,56 @@ const DaewunTable: React.FC<{ data: CycleItem[], birthYear: number, currentAge: 
   );
 };
 
-// 원광대 만세력 스타일 세운 테이블
-const SaewunTable: React.FC<{ data: CycleItem[], currentAge: number }> = ({ data, currentAge }) => {
-  // 역순으로 표시 (높은 나이 왼쪽)
+// 원광대 만세력 스타일 세운 테이블 (정확한 스타일)
+const SaewunTable: React.FC<{ data: CycleItem[], currentAge: number, birthYear: number }> = ({ data, currentAge, birthYear }) => {
+  // 역순으로 표시 (높은 나이 왼쪽 → 낮은 나이 오른쪽)
   const displayData = [...data].reverse();
   const currentYear = new Date().getFullYear();
   
   return (
     <div className="mb-6">
-      <h4 className="font-bold text-base mb-2 text-gray-800">세운 (歲運)</h4>
-      <div className="w-full overflow-x-auto">
+      <h4 className="font-bold text-base mb-2 text-gray-800 bg-gray-100 inline-block px-2 py-1">세운 (歲運)</h4>
+      <div className="w-full overflow-x-auto pb-2">
+        {/* 년도 행 (상단) */}
         <div className="flex flex-row min-w-max">
           {displayData.map((item, idx) => {
             const isCurrentYear = item.year === currentYear;
-            
             return (
-              <div key={idx} className={`flex flex-col w-10 border border-gray-400 shrink-0 ${isCurrentYear ? 'bg-orange-200' : 'bg-white'}`}>
-                {/* 천간 */}
-                <div className={`text-center py-0.5 text-base font-bold font-serif ${getElementBgColor(item.ganji.charAt(0))} ${getElementTextColor(item.ganji.charAt(0))}`}>
-                  {item.ganji.charAt(0)}
-                </div>
-                {/* 지지 */}
-                <div className={`text-center py-0.5 text-base font-bold font-serif border-t border-gray-200 ${getElementBgColor(item.ganji.charAt(1))} ${getElementTextColor(item.ganji.charAt(1))}`}>
-                  {item.ganji.charAt(1)}
-                </div>
-                {/* 나이 */}
-                <div className="text-[9px] text-center py-0.5 border-t border-gray-300 bg-white font-bold">
-                  {item.age}
-                </div>
+              <div key={idx} className={`w-9 text-[8px] text-center py-0.5 border border-gray-300 ${isCurrentYear ? 'bg-orange-300 font-bold' : 'bg-white'} text-gray-700`}>
+                {item.year}
               </div>
             );
           })}
         </div>
-        {/* 년도 행 */}
-        <div className="flex flex-row min-w-max mt-0">
+        {/* 천간 행 */}
+        <div className="flex flex-row min-w-max">
           {displayData.map((item, idx) => {
             const isCurrentYear = item.year === currentYear;
             return (
-              <div key={idx} className={`w-10 text-[8px] text-center py-0.5 border-x border-b border-gray-300 ${isCurrentYear ? 'bg-orange-100' : 'bg-gray-50'} text-gray-500`}>
-                {item.year}
+              <div key={idx} className={`w-9 text-center py-0.5 text-base font-bold font-serif border-x border-gray-300 ${isCurrentYear ? 'bg-orange-200' : getElementBgColor(item.ganji.charAt(0))} ${getElementTextColor(item.ganji.charAt(0))}`}>
+                {item.ganji.charAt(0)}
+              </div>
+            );
+          })}
+        </div>
+        {/* 지지 행 */}
+        <div className="flex flex-row min-w-max">
+          {displayData.map((item, idx) => {
+            const isCurrentYear = item.year === currentYear;
+            return (
+              <div key={idx} className={`w-9 text-center py-0.5 text-base font-bold font-serif border-x border-gray-300 ${isCurrentYear ? 'bg-orange-200' : getElementBgColor(item.ganji.charAt(1))} ${getElementTextColor(item.ganji.charAt(1))}`}>
+                {item.ganji.charAt(1)}
+              </div>
+            );
+          })}
+        </div>
+        {/* 나이 행 (하단) */}
+        <div className="flex flex-row min-w-max">
+          {displayData.map((item, idx) => {
+            const isCurrentYear = item.year === currentYear;
+            return (
+              <div key={idx} className={`w-9 text-[9px] text-center py-0.5 border border-gray-300 ${isCurrentYear ? 'bg-orange-300 font-bold' : 'bg-white'}`}>
+                {item.age}
               </div>
             );
           })}
@@ -117,35 +128,49 @@ const SaewunTable: React.FC<{ data: CycleItem[], currentAge: number }> = ({ data
   );
 };
 
-// 원광대 만세력 스타일 월운 테이블
-const WolwunTable: React.FC<{ data: CycleItem[], title: string }> = ({ data, title }) => {
-  // 역순으로 표시 (12월 -> 1월)
+// 원광대 만세력 스타일 월운 테이블 (정확한 스타일)
+const WolwunTable: React.FC<{ data: CycleItem[], title: string, birthYear: number }> = ({ data, title, birthYear }) => {
+  // 역순으로 표시 (12월 → 1월)
   const displayData = [...data].reverse();
   const currentMonth = new Date().getMonth() + 1;
   const currentYear = new Date().getFullYear();
   
   return (
     <div className="mb-6">
-      <h4 className="font-bold text-base mb-2 text-gray-800">{title}</h4>
-      <div className="w-full overflow-x-auto">
+      <h4 className="font-bold text-base mb-2 text-gray-800 bg-yellow-100 inline-block px-2 py-1 border border-yellow-300">{title}</h4>
+      <div className="w-full overflow-x-auto pb-2">
+        {/* 천간 행 */}
         <div className="flex flex-row min-w-max">
           {displayData.map((item, idx) => {
-            const isCurrentMonth = item.year === currentYear && Number(item.age) === currentMonth;
-            
+            const monthNum = Number(item.age);
+            const isCurrentMonth = item.year === currentYear && monthNum === currentMonth;
             return (
-              <div key={idx} className={`flex flex-col w-10 border border-gray-400 shrink-0 ${isCurrentMonth ? 'bg-orange-200' : 'bg-white'}`}>
-                {/* 천간 */}
-                <div className={`text-center py-0.5 text-base font-bold font-serif ${getElementBgColor(item.ganji.charAt(0))} ${getElementTextColor(item.ganji.charAt(0))}`}>
-                  {item.ganji.charAt(0)}
-                </div>
-                {/* 지지 */}
-                <div className={`text-center py-0.5 text-base font-bold font-serif border-t border-gray-200 ${getElementBgColor(item.ganji.charAt(1))} ${getElementTextColor(item.ganji.charAt(1))}`}>
-                  {item.ganji.charAt(1)}
-                </div>
-                {/* 월 */}
-                <div className="text-[10px] text-center py-0.5 border-t border-gray-300 bg-white font-bold">
-                  {item.age}
-                </div>
+              <div key={idx} className={`w-9 text-center py-0.5 text-base font-bold font-serif border border-gray-300 ${isCurrentMonth ? 'bg-pink-200' : getElementBgColor(item.ganji.charAt(0))} ${getElementTextColor(item.ganji.charAt(0))}`}>
+                {item.ganji.charAt(0)}
+              </div>
+            );
+          })}
+        </div>
+        {/* 지지 행 */}
+        <div className="flex flex-row min-w-max">
+          {displayData.map((item, idx) => {
+            const monthNum = Number(item.age);
+            const isCurrentMonth = item.year === currentYear && monthNum === currentMonth;
+            return (
+              <div key={idx} className={`w-9 text-center py-0.5 text-base font-bold font-serif border-x border-b border-gray-300 ${isCurrentMonth ? 'bg-pink-200' : getElementBgColor(item.ganji.charAt(1))} ${getElementTextColor(item.ganji.charAt(1))}`}>
+                {item.ganji.charAt(1)}
+              </div>
+            );
+          })}
+        </div>
+        {/* 월 행 (하단) */}
+        <div className="flex flex-row min-w-max">
+          {displayData.map((item, idx) => {
+            const monthNum = Number(item.age);
+            const isCurrentMonth = item.year === currentYear && monthNum === currentMonth;
+            return (
+              <div key={idx} className={`w-9 text-[10px] text-center py-0.5 border-x border-b border-gray-300 ${isCurrentMonth ? 'bg-pink-300 font-bold' : 'bg-white'}`}>
+                {item.age}
               </div>
             );
           })}
@@ -412,11 +437,13 @@ const App: React.FC = () => {
             />
             <SaewunTable 
               data={sajuResult.saewun} 
-              currentAge={sajuResult.koreanAge} 
+              currentAge={sajuResult.koreanAge}
+              birthYear={parseInt(input.birthDate.split('-')[0])}
             />
             <WolwunTable 
               data={sajuResult.wolwun} 
               title={`${new Date().getFullYear()}년 (${sajuResult.koreanAge}세) 월운`}
+              birthYear={parseInt(input.birthDate.split('-')[0])}
             />
           </section>
 
