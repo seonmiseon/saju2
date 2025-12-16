@@ -567,22 +567,191 @@ export const analyzeSaju = async (input: UserInput): Promise<SajuAnalysisResult>
   }
 };
 
+// 천기도사 AI 없이 상세한 기본 답변 생성
+function getDetailedDefaultResponse(question: string, sajuContext: SajuAnalysisResult, userName: string): string {
+  const dayStem = sajuContext.dayPillar.stem;
+  const missingElements = sajuContext.missingElements;
+  const missing1 = missingElements[0]?.element || '수(水)';
+  const missing2 = missingElements[1]?.element || '화(火)';
+  
+  // 질문 키워드 분석
+  const isJobQuestion = /이직|직장|취업|사업|창업|회사|업무|일|진로/.test(question);
+  const isLoveQuestion = /애인|연애|사랑|결혼|인연|이성|남친|여친|배우자/.test(question);
+  const isBusinessQuestion = /사업|창업|투자|돈|재물|재산|부동산/.test(question);
+  const isHealthQuestion = /건강|몸|병|아프|질병|치료/.test(question);
+  const isYear2026 = /내년|2026|병오/.test(question);
+
+  let response = `${userName}, 다시 만나니 반갑구려. 자네의 심중을 꿰뚫어 보니, `;
+  
+  if (isYear2026) {
+    response += `내년(2026년 병오년)의 행로에 대한 궁금증이 지대하구려. `;
+  }
+  
+  if (isJobQuestion && isYear2026) {
+    response += `직장 이직에 대해 소상히 일러주겠으니 귀 기울여 듣게나.
+
+**[2026년 병오년 직장/이직 운세 분석]**
+
+자네의 사주를 다시 한번 짚어보니 일간은 ${dayStem}이요. 가장 필요한 기운은 1순위 ${missing1}, 2순위 ${missing2}이라 하였으니, 내년(2026년 병오년)의 기운이 자네에게 어떠한 영향을 미칠지 천기를 풀어보세.
+
+내년(2026년 병오년)은 하늘의 기운은 丙火(병화)요, 땅의 기운은 午火(오화)라.
+
+1.  **丙辛合水(병신합수)의 강력한 변화:**
+    내년의 천간 丙火는 자네의 일간과 만나 놀라운 합(合)을 이루니, 이는 정관이 일간과 만나 자네에게 가장 필요한 기운으로 변화한다는 것을 의미한다네. 이는 그야말로 천우신조와 같은 길운이라 할 수 있네.
+    
+    기존의 직장, 명예, 규율, 혹은 자네를 옭아매던 틀이 변화하거나 사라진다는 것을 암시한다네. 이는 억압적이었던 상황에서 벗어나 새로운 길을 모색하게 됨을 뜻하지.
+
+2.  **변화의 동기:**
+    현재 직장에서의 스트레스, 압박감, 책임감이 가중될 수 있다네. 이는 자네로 하여금 '이대로는 안 되겠다'는 강한 변화의 열망을 느끼게 할 것이오. 기존 환경에 대한 불만이 임계점에 달하여, 이직을 결심하는 결정적인 계기가 될 수 있는 것이지.
+
+3.  **새로운 기회:**
+    이직을 한다면, 단순히 환경만 바꾸는 것이 아니라 자네의 전문성이나 창의성을 발휘할 수 있는 분야, 혹은 보다 자유롭고 유연한 형태의 직업이나 역할로 전환하는 것이 매우 길하다네.
+
+**[결론]**
+내년(2026년 병오년)의 이직은 자네의 사주 흐름상 매우 긍정적이며, 한 단계 도약할 수 있는 기회가 될 것이니 주저 말고 나아가게나. 다만 충분한 준비와 정보를 바탕으로 신중하게 결정하고, 새로운 환경에 대한 기대와 함께 현실적인 어려움도 미리 대비하는 지혜를 발휘해야 할 것이오.`;
+  } else if (isLoveQuestion && isYear2026) {
+    response += `연애와 인연에 대해 소상히 일러주겠으니 귀 기울여 듣게나.
+
+**[2026년 병오년 애정운 분석]**
+
+내년(2026년 병오년)은 자네의 애정운 또한 밝게 빛나는 시기이니, 마음을 활짝 열고 인연을 맞이할 준비를 하게나.
+
+1.  **매력 발산과 활동성:**
+    자네는 평소보다 활기차고 자신감 넘치는 모습으로 사회생활이나 모임에 적극적으로 참여하게 될 것이오. 이러한 긍정적인 에너지는 자연스럽게 이성을 끌어당기는 힘이 될 것이라네. 자네 스스로도 타인에게 먼저 다가가거나 자신의 감정을 표현하는 데 주저함이 없어질 것이오.
+
+2.  **도화(桃花) 기운의 증폭:**
+    월지 午火가 겹치면서, 도화 기운이 더욱 강해진다네. 도화는 이성에게 매력적으로 보이고 인기를 얻는 기운을 의미하니, 자네를 좋아하는 이들이 많아지고, 만남의 기회가 빈번해질 것이오. 특히 직장이나 사회 활동을 통해 인연을 만날 가능성이 높다네.
+
+3.  **연애의 흐름:**
+    긍정적이고 밝은 연애를 경험하게 될 것이며, 이 관계는 자네의 삶에 활력을 불어넣어 줄 것이오. 다만, 너무 깊은 관계보다는 가벼운 만남을 선호할 수도 있으니, 진지한 관계를 원한다면 자신의 마음을 명확히 전달하는 것이 중요할 것이오.
+
+**[결론]**
+내년(2026년 병오년)에는 새로운 애인이 생길 가능성이 매우 높으니, 열린 마음으로 다양한 사람들과 교류하며 기회를 놓치지 말게나.`;
+  } else if (isBusinessQuestion && isYear2026) {
+    response += `사업과 재물에 대해 소상히 일러주겠으니 귀 기울여 듣게나.
+
+**[2026년 병오년 사업/재물운 분석]**
+
+내년(2026년 병오년)은 자네가 사업을 시작하기에도 매우 길한 운세가 들어와 있다네.
+
+1.  **사업적 재능 발현:**
+    자네의 독창적인 아이디어나 기술, 혹은 특기를 활용한 사업이 길하겠구려. 그동안 마음속에만 품고 있던 사업 구상이나 아이디어를 실현할 수 있는 절호의 기회라 할 수 있네.
+
+2.  **변화의 촉진:**
+    기존 직장 환경에서의 압박감은 자네를 사업으로 내모는 강력한 촉매제가 될 것이오. 이 답답함과 스트레스가 오히려 사업을 시작할 용기와 결단력을 불어넣어 줄 것이니, 위기를 기회로 삼는 지혜를 발휘하게나.
+
+3.  **유의할 점:**
+    사업 초기에는 예상치 못한 자금 문제나 계약상의 어려움, 혹은 돌발 변수가 발생할 수 있다네. 이는 초기에 혼란을 야기할 수 있으나, 지혜와 유연함으로 충분히 극복할 수 있을 것이오.
+    
+    - **철저한 준비:** 급하게 서두르기보다는 시장 조사, 사업 계획 수립, 자금 조달 방안 마련 등 철저한 사전 준비가 필수라네.
+    - **협력자의 중요성:** 혼자 모든 것을 감당하려 하기보다는, 부족한 부분을 보완해 줄 수 있는 능력 있는 협력자나 전문가의 조언을 구하는 것이 현명할 것이오.
+
+**[결론]**
+내년(2026년 병오년)은 자네가 사업을 시작하기에 더없이 좋은 기운이 들어와 있으니, 용기를 내어 도전하되 신중하고 철저한 준비를 겸비한다면 큰 성공을 이룰 수 있을 것이오.`;
+  } else if (isHealthQuestion) {
+    response += `건강에 대해 소상히 일러주겠으니 귀 기울여 듣게나.
+
+**[건강 운세 분석]**
+
+자네의 사주 원국을 보니 ${missing1} 기운이 부족하여 주의가 필요하다네.
+
+1.  **취약 부위:**
+    ${missing1 === '수(水)' ? '신장, 방광, 생식기 계통에 주의가 필요하다네. 허리 통증, 부종, 소변 관련 문제가 나타날 수 있소.' : 
+      missing1 === '화(火)' ? '심장, 혈액순환 계통에 주의가 필요하다네. 손발이 차거나 가슴 답답함이 나타날 수 있소.' :
+      missing1 === '목(木)' ? '간, 담낭, 눈 건강에 주의가 필요하다네. 피로감과 시력 저하가 나타날 수 있소.' :
+      missing1 === '금(金)' ? '폐, 호흡기 계통에 주의가 필요하다네. 잦은 감기와 피부 문제가 나타날 수 있소.' :
+      '소화기 계통에 주의가 필요하다네. 소화불량과 복부 팽만감이 나타날 수 있소.'}
+
+2.  **건강 관리 비법:**
+    - 하루 충분한 수분 섭취 (2리터 이상)
+    - 규칙적인 운동 (주 3회 이상 유산소 운동)
+    - 충분한 수면 (7-8시간)
+    - 스트레스 관리 (명상, 요가 권장)
+
+3.  **추천 음식:**
+    ${missing1 === '수(水)' ? '검은콩, 검은깨, 해조류, 수박, 오이 등 수분이 많은 음식을 섭취하시오.' :
+      missing1 === '화(火)' ? '토마토, 고추, 마늘, 양파, 따뜻한 차를 즐기시오.' :
+      missing1 === '목(木)' ? '녹색 채소, 시금치, 브로콜리, 케일을 섭취하시오.' :
+      missing1 === '금(金)' ? '도라지, 배, 무, 연근, 흰색 채소를 섭취하시오.' :
+      '고구마, 호박, 현미, 잡곡을 섭취하시오.'}
+
+**[결론]**
+건강은 모든 것의 기본이니, 위의 조언을 따르고 정기적인 건강 검진을 받으시게나.`;
+  } else {
+    // 일반적인 질문에 대한 상세한 답변
+    response += `자네의 물음에 대해 소상히 일러주겠네.
+
+**[사주 분석에 따른 조언]**
+
+자네의 사주를 다시 살펴보니, 일간 ${dayStem}을 중심으로 1순위 ${missing1}, 2순위 ${missing2} 기운을 보충하는 것이 가장 시급하다네.
+
+1.  **현재 상황 분석:**
+    자네의 물음은 마음속 깊은 곳의 고민에서 비롯된 것이로구려. 지금 자네가 처한 상황은 변화의 문턱에 있으니, 신중하면서도 과감한 결단이 필요한 시기라네.
+
+2.  **운의 흐름:**
+    내년(2026년 병오년)은 丙火와 午火가 겹치는 강력한 화기(火氣)의 해이니, 열정과 활력이 넘치지만 동시에 조급함을 경계해야 할 것이오. 자네에게 필요한 ${missing1} 기운을 보충하면서 차분히 준비한다면 좋은 결과가 있을 것이라네.
+
+3.  **구체적 조언:**
+    - ${missing1} 기운을 보충하기 위해 해당 색상(${missing1 === '수(水)' ? '검정, 파랑' : missing1 === '화(火)' ? '빨강, 주황' : missing1 === '목(木)' ? '초록' : missing1 === '금(金)' ? '흰색, 금색' : '노랑, 갈색'})을 활용하시오.
+    - 중요한 결정은 ${missing1 === '수(Water)' || missing1 === '수(水)' ? '북쪽' : missing1 === '화(Fire)' || missing1 === '화(火)' ? '남쪽' : missing1 === '목(Wood)' || missing1 === '목(木)' ? '동쪽' : missing1 === '금(Metal)' || missing1 === '금(金)' ? '서쪽' : '중앙'} 방향을 향해 내리시오.
+    - 급한 마음을 버리고 때를 기다리는 지혜를 갖추시오.
+
+**[결론 및 축원]**
+
+${userName}, 자네의 앞날에는 밝은 기운이 감돌고 있으니 너무 걱정하지 말게나. 위에 일러준 조언들을 잘 따르고, 자신의 내면에 집중하여 용신 기운을 최대한 끌어올린다면, 분명히 길운을 맞이하게 될 것이오.
+
+부디 만사형통하여 마음속에 품었던 꿈을 이루고, 행복과 번영이 가득한 날들을 보내기를 천기 도사인 내가 진심으로 축원하겠네! ${userName}의 앞날에 광명이 가득할지어다!`;
+  }
+
+  return response;
+}
+
 export const consultSaju = async (
   question: string,
   sajuContext: SajuAnalysisResult,
   chatHistory: { role: string; parts: { text: string }[] }[],
-  apiKey?: string
+  apiKey?: string,
+  userName?: string
 ): Promise<string> => {
   const key = getApiKey(apiKey);
-  if (!key) return "API Key가 설정되지 않아 답변할 수 없습니다.";
+  
+  // API Key가 없으면 상세한 기본 답변 제공
+  if (!key) {
+    return getDetailedDefaultResponse(question, sajuContext, userName || "벗이여");
+  }
 
   const model = "gemini-2.5-flash";
   const ai = new GoogleGenAI({ apiKey: key });
   
   const systemContext = `
-    역할: 천기 도사. 논문 수준의 깊이와 논리로 답변.
-    사주: 일간 ${sajuContext.dayPillar.stem}, 용신 ${sajuContext.missingElements.map(m => m.element).join(', ')}.
-    답변: 최소 1000자 이상.
+    역할: 당신은 40년 경력의 '천기 도사'입니다. 사투리 없이 고풍스러운 한문 어투로 대화합니다.
+    
+    말투 예시:
+    - "반갑네, [이름]. 자네의 사주를 짚어보니..."
+    - "...하구려", "...이라네", "...할 것이오", "...하게나"
+    - 자네의 물음에 대해 소상히 일러주겠네.
+    
+    사주 정보:
+    - 일간: ${sajuContext.dayPillar.stem}
+    - 년주: ${sajuContext.yearPillar.stem}${sajuContext.yearPillar.branch}
+    - 월주: ${sajuContext.monthPillar.stem}${sajuContext.monthPillar.branch}
+    - 일주: ${sajuContext.dayPillar.stem}${sajuContext.dayPillar.branch}
+    - 시주: ${sajuContext.hourPillar.stem}${sajuContext.hourPillar.branch}
+    - 용신(필요 기운): ${sajuContext.missingElements.map(m => `${m.priority}순위 ${m.element}`).join(', ')}
+    - 오행: 木(${sajuContext.elementCounts.Wood}), 火(${sajuContext.elementCounts.Fire}), 土(${sajuContext.elementCounts.Earth}), 金(${sajuContext.elementCounts.Metal}), 水(${sajuContext.elementCounts.Water})
+    
+    답변 형식:
+    1. **[주제 분석]** 제목을 붙이고 섹션을 나누어 설명
+    2. 각 섹션에 번호를 매기고 소제목 사용
+    3. 사주의 간지(干支), 합(合), 충(沖), 형(刑), 파(破) 등 전문 용어를 사용하여 분석
+    4. 마지막에 **[결론 및 축원]**으로 마무리하며 복을 빌어주기
+    5. 최소 1500자 이상의 상세한 답변
+    
+    특히 2026년 병오년(丙午年) 관련 질문시:
+    - 丙火와 午火의 의미 분석
+    - 사용자 일간과의 합충 관계 분석 (丙辛合水 등)
+    - 伏吟, 刑, 沖, 破 등 지지 관계 분석
+    - 구체적인 시기와 방법 제시
   `;
   
   const adjustedHistory = [...chatHistory];
@@ -593,13 +762,17 @@ export const consultSaju = async (
   try {
     const chat = ai.chats.create({
       model,
-      config: { systemInstruction: systemContext },
+      config: { 
+        systemInstruction: systemContext,
+        temperature: 0.7,
+      },
       history: adjustedHistory,
     });
     const result = await chat.sendMessage({ message: question });
-    return result.text || "점괘가 흐릿하구려.";
+    return result.text || "점괘가 흐릿하구려. 다시 한번 물어보게나.";
   } catch (error) {
     console.error(error);
-    return "천기를 읽는 데 방해가 생겼네. 잠시 후 다시 시도하게나.";
+    // 에러 시에도 상세한 기본 답변 제공
+    return getDetailedDefaultResponse(question, sajuContext, userName || "벗이여");
   }
 };

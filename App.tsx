@@ -262,7 +262,14 @@ const App: React.FC = () => {
       const result = await analyzeSaju(input);
       setSajuResult(result);
       const missingText = result.missingElements.map(m => `${m.priority}순위 ${m.element}`).join(', ');
-      setChatMessages([{ id: 'init', role: 'model', text: `반갑네, ${input.name}. 자네의 사주를 깊이 들여다보니 ${missingText} 기운이 가장 시급하구려.` }]);
+      const welcomeMsg = `반갑네, ${input.name}. 내 자네의 사주를 짚어보니 ${missingText} 기운이 가장 시급하구려. 이를 채우면 대박이 날 터이니, 궁금한 것이 있다면 상세히 물어보게나.
+
+예시 질문:
+• 내년에 직장을 이직하는데 좋은가요?
+• 내년에 애인이 생기나요?
+• 내년에 사업을 하면 좋은가요?
+• 건강은 어떤 부분을 조심해야 하나요?`;
+      setChatMessages([{ id: 'init', role: 'model', text: welcomeMsg }]);
     } catch (error: any) {
       alert(`[오류 발생] ${error.message || "알 수 없는 오류"}\nAPI Key가 정확한지 확인해주세요.`);
       console.error(error);
@@ -280,7 +287,7 @@ const App: React.FC = () => {
     setIsChatLoading(true);
     try {
       const apiHistory = chatMessages.map(msg => ({ role: msg.role, parts: [{ text: msg.text }] }));
-      const answer = await consultSaju(userMsg.text, sajuResult, apiHistory, input.apiKey);
+      const answer = await consultSaju(userMsg.text, sajuResult, apiHistory, input.apiKey, input.name);
       setChatMessages(prev => [...prev, { id: (Date.now() + 1).toString(), role: 'model', text: answer }]);
     } catch (error) {
       setChatMessages(prev => [...prev, { id: Date.now().toString(), role: 'model', text: "도사님이 잠시 출타중이십니다.", isError: true }]);
@@ -289,26 +296,306 @@ const App: React.FC = () => {
     }
   };
 
+  // 텍스트 파일 다운로드
+  const handleDownloadText = () => {
+    if (!sajuResult) return;
+    
+    let content = `═══════════════════════════════════════════════════════════════
+                    천기누설 운명 감정서
+═══════════════════════════════════════════════════════════════
+
+【 기본 정보 】
+성명: ${input.name}
+나이: ${sajuResult.koreanAge}세
+생년월일(양력): ${sajuResult.solarDateStr}
+생년월일(음력): ${sajuResult.lunarDateStr}
+태어난 시각: ${input.birthTime}
+절기: ${sajuResult.solarTermStr}
+
+【 사주 원국 】
+년주: ${sajuResult.yearPillar.stem}${sajuResult.yearPillar.branch} (${sajuResult.yearPillar.stemKorean}${sajuResult.yearPillar.branchKorean})
+월주: ${sajuResult.monthPillar.stem}${sajuResult.monthPillar.branch} (${sajuResult.monthPillar.stemKorean}${sajuResult.monthPillar.branchKorean})
+일주: ${sajuResult.dayPillar.stem}${sajuResult.dayPillar.branch} (${sajuResult.dayPillar.stemKorean}${sajuResult.dayPillar.branchKorean})
+시주: ${sajuResult.hourPillar.stem}${sajuResult.hourPillar.branch} (${sajuResult.hourPillar.stemKorean}${sajuResult.hourPillar.branchKorean})
+
+【 오행 분포 】
+木: ${sajuResult.elementCounts.Wood}개
+火: ${sajuResult.elementCounts.Fire}개
+土: ${sajuResult.elementCounts.Earth}개
+金: ${sajuResult.elementCounts.Metal}개
+水: ${sajuResult.elementCounts.Water}개
+
+채워야 할 기운: ${sajuResult.missingElements.map(m => `${m.priority}순위 ${m.element}`).join(', ')}
+
+═══════════════════════════════════════════════════════════════
+                    1. 타고난 기질과 운명
+═══════════════════════════════════════════════════════════════
+
+${sajuResult.dayMasterReading}
+
+═══════════════════════════════════════════════════════════════
+                    2. 개운 비책 (대박의 열쇠)
+═══════════════════════════════════════════════════════════════
+
+${sajuResult.chaeumAdvice.summary}
+
+▶ 행운의 색: ${sajuResult.chaeumAdvice.color}
+${sajuResult.chaeumAdvice.colorAdvice || ''}
+
+▶ 대박 방위: ${sajuResult.chaeumAdvice.direction}
+${sajuResult.chaeumAdvice.directionAdvice || ''}
+
+▶ 개운 아이템: ${sajuResult.chaeumAdvice.items}
+${sajuResult.chaeumAdvice.itemAdvice || ''}
+
+═══════════════════════════════════════════════════════════════
+                    3. 맞춤형 건강 처방
+═══════════════════════════════════════════════════════════════
+
+▶ 취약 장기
+${sajuResult.healthAnalysis.weakOrgans}
+
+▶ 예상 증상
+${sajuResult.healthAnalysis.symptoms}
+
+▶ 전문의 상세 처방
+${sajuResult.healthAnalysis.medicalAdvice}
+
+▶ 추천 식이요법
+${sajuResult.healthAnalysis.foodRecommendation}
+
+═══════════════════════════════════════════════════════════════
+                    4. 2026년 (병오년) 대박 운세
+═══════════════════════════════════════════════════════════════
+
+【 총운 】
+${sajuResult.fortune2026.overall}
+
+【 재물운 】
+${sajuResult.fortune2026.wealth}
+
+【 직업/사업운 】
+${sajuResult.fortune2026.career}
+
+【 건강운 】
+${sajuResult.fortune2026.health}
+
+【 애정/가정운 】
+${sajuResult.fortune2026.love}
+
+═══════════════════════════════════════════════════════════════
+                    5. 귀인과 길일 (풍수지리)
+═══════════════════════════════════════════════════════════════
+
+${sajuResult.luckyTable.map(row => `• ${row.date} / ${row.time} / ${row.direction}`).join('\n')}
+
+【 풍수학적 분석 】
+${sajuResult.fengShuiThesis}
+
+═══════════════════════════════════════════════════════════════
+                    6. 천기도사님과의 상담 기록
+═══════════════════════════════════════════════════════════════
+
+`;
+    
+    // 채팅 내용 추가
+    chatMessages.forEach(msg => {
+      if (msg.role === 'user') {
+        content += `\n[질문] ${msg.text}\n`;
+      } else {
+        content += `\n[천기도사] ${msg.text}\n`;
+      }
+    });
+
+    content += `
+═══════════════════════════════════════════════════════════════
+                    천기누설 운명 감정원
+                    ${new Date().toLocaleDateString('ko-KR')} 작성
+═══════════════════════════════════════════════════════════════
+`;
+
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${input.name}_천기누설_통합감정서.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   const handleDownloadPDF = async () => {
-    if (!reportRef.current) return;
+    if (!reportRef.current || !sajuResult) return;
     try {
-      const canvas = await html2canvas(reportRef.current, { scale: 1.5, useCORS: true, backgroundColor: "#F7F5F0" });
-      const imgData = canvas.toDataURL('image/png');
+      // PDF용 임시 컨테이너 생성
+      const pdfContainer = document.createElement('div');
+      pdfContainer.style.cssText = 'position: absolute; left: -9999px; top: 0; width: 210mm; background: white; padding: 20px; font-family: sans-serif;';
+      
+      // PDF 콘텐츠 생성
+      pdfContainer.innerHTML = `
+        <div style="padding: 40px; font-size: 14px; line-height: 1.8;">
+          <h1 style="text-align: center; font-size: 28px; margin-bottom: 10px; border-bottom: 3px solid #333; padding-bottom: 15px;">천기누설 운명 감정서</h1>
+          <p style="text-align: center; font-size: 18px; margin-bottom: 30px;">${input.name} 님 (${sajuResult.koreanAge}세)</p>
+          
+          <div style="background: #f5f5f5; padding: 20px; margin-bottom: 30px; border-radius: 8px;">
+            <h3 style="margin: 0 0 15px 0;">기본 정보</h3>
+            <p>• 생년월일(양력): ${sajuResult.solarDateStr}</p>
+            <p>• 생년월일(음력): ${sajuResult.lunarDateStr}</p>
+            <p>• 태어난 시각: ${input.birthTime}</p>
+            <p>• 절기: ${sajuResult.solarTermStr}</p>
+          </div>
+          
+          <div style="background: #fff8e8; padding: 20px; margin-bottom: 30px; border: 2px solid #e8d4c0; border-radius: 8px;">
+            <h3 style="margin: 0 0 15px 0;">사주 원국</h3>
+            <table style="width: 100%; text-align: center; border-collapse: collapse;">
+              <tr style="background: #f0e6d8;">
+                <th style="padding: 10px; border: 1px solid #ccc;">시주</th>
+                <th style="padding: 10px; border: 1px solid #ccc;">일주</th>
+                <th style="padding: 10px; border: 1px solid #ccc;">월주</th>
+                <th style="padding: 10px; border: 1px solid #ccc;">년주</th>
+              </tr>
+              <tr>
+                <td style="padding: 15px; border: 1px solid #ccc; font-size: 24px;">${sajuResult.hourPillar.stem}${sajuResult.hourPillar.branch}</td>
+                <td style="padding: 15px; border: 1px solid #ccc; font-size: 24px;">${sajuResult.dayPillar.stem}${sajuResult.dayPillar.branch}</td>
+                <td style="padding: 15px; border: 1px solid #ccc; font-size: 24px;">${sajuResult.monthPillar.stem}${sajuResult.monthPillar.branch}</td>
+                <td style="padding: 15px; border: 1px solid #ccc; font-size: 24px;">${sajuResult.yearPillar.stem}${sajuResult.yearPillar.branch}</td>
+              </tr>
+            </table>
+            <p style="margin-top: 15px; text-align: center;">
+              오행: 木(${sajuResult.elementCounts.Wood}) 火(${sajuResult.elementCounts.Fire}) 土(${sajuResult.elementCounts.Earth}) 金(${sajuResult.elementCounts.Metal}) 水(${sajuResult.elementCounts.Water})
+            </p>
+            <p style="text-align: center; color: #c5a059; font-weight: bold;">
+              채워야 할 기운: ${sajuResult.missingElements.map(m => `${m.priority}순위 ${m.element}`).join(', ')}
+            </p>
+          </div>
+          
+          <div style="margin-bottom: 30px; page-break-inside: avoid;">
+            <h2 style="border-left: 4px solid #333; padding-left: 10px;">1. 타고난 기질과 운명</h2>
+            <p style="text-align: justify; white-space: pre-line;">${sajuResult.dayMasterReading}</p>
+          </div>
+          
+          <div style="margin-bottom: 30px; background: #fff8f0; padding: 20px; border-radius: 8px; page-break-inside: avoid;">
+            <h2 style="color: #8b6914;">2. 개운 비책 (대박의 열쇠)</h2>
+            <p style="text-align: justify; white-space: pre-line;">${sajuResult.chaeumAdvice.summary}</p>
+            <div style="margin-top: 20px;">
+              <p><strong>🎨 행운의 색:</strong> ${sajuResult.chaeumAdvice.color}</p>
+              <p style="margin-left: 20px; color: #666;">${sajuResult.chaeumAdvice.colorAdvice || ''}</p>
+              <p><strong>🧭 대박 방위:</strong> ${sajuResult.chaeumAdvice.direction}</p>
+              <p style="margin-left: 20px; color: #666;">${sajuResult.chaeumAdvice.directionAdvice || ''}</p>
+              <p><strong>🏺 개운 아이템:</strong> ${sajuResult.chaeumAdvice.items}</p>
+              <p style="margin-left: 20px; color: #666;">${sajuResult.chaeumAdvice.itemAdvice || ''}</p>
+            </div>
+          </div>
+          
+          <div style="margin-bottom: 30px; background: #f0f7ff; padding: 20px; border-radius: 8px; page-break-inside: avoid;">
+            <h2 style="color: #1a4a8a;">3. 맞춤형 건강 처방</h2>
+            <h4 style="color: #c53030;">⚠️ 취약 장기</h4>
+            <p style="white-space: pre-line;">${sajuResult.healthAnalysis.weakOrgans}</p>
+            <h4 style="color: #d97706;">🩺 예상 증상</h4>
+            <p style="white-space: pre-line;">${sajuResult.healthAnalysis.symptoms}</p>
+            <h4 style="color: #1a4a8a;">📋 전문의 상세 처방</h4>
+            <p style="white-space: pre-line; text-align: justify;">${sajuResult.healthAnalysis.medicalAdvice}</p>
+            <h4 style="color: #166534;">🥗 추천 식이요법</h4>
+            <p style="white-space: pre-line;">${sajuResult.healthAnalysis.foodRecommendation}</p>
+          </div>
+          
+          <div style="margin-bottom: 30px; background: #fff5f5; padding: 20px; border-radius: 8px; border-top: 4px solid #dc2626; page-break-inside: avoid;">
+            <h2 style="color: #b91c1c;">4. 2026년 (병오년) 대박 운세</h2>
+            <h4>🔥 총운</h4>
+            <p style="white-space: pre-line; text-align: justify;">${sajuResult.fortune2026.overall}</p>
+            <h4>💰 재물운</h4>
+            <p style="white-space: pre-line;">${sajuResult.fortune2026.wealth}</p>
+            <h4>💼 직업/사업운</h4>
+            <p style="white-space: pre-line;">${sajuResult.fortune2026.career}</p>
+            <h4>💕 애정/가정운</h4>
+            <p style="white-space: pre-line;">${sajuResult.fortune2026.love}</p>
+            <h4>💪 건강운</h4>
+            <p style="white-space: pre-line;">${sajuResult.fortune2026.health}</p>
+          </div>
+          
+          <div style="margin-bottom: 30px; background: #1f2937; color: white; padding: 20px; border-radius: 8px; page-break-inside: avoid;">
+            <h2 style="color: #fbbf24;">5. 귀인과 길일 (풍수지리)</h2>
+            <table style="width: 100%; color: white; border-collapse: collapse; margin-bottom: 20px;">
+              <tr style="background: #374151;">
+                <th style="padding: 10px; text-align: left;">날짜</th>
+                <th style="padding: 10px; text-align: left;">시간</th>
+                <th style="padding: 10px; text-align: left;">방위</th>
+              </tr>
+              ${sajuResult.luckyTable.map(row => `
+                <tr style="border-bottom: 1px solid #4b5563;">
+                  <td style="padding: 10px; color: #fbbf24;">${row.date}</td>
+                  <td style="padding: 10px;">${row.time}</td>
+                  <td style="padding: 10px; color: #60a5fa;">${row.direction}</td>
+                </tr>
+              `).join('')}
+            </table>
+            <h4 style="color: #fbbf24;">풍수학적 분석</h4>
+            <p style="white-space: pre-line;">${sajuResult.fengShuiThesis}</p>
+          </div>
+          
+          <div style="margin-bottom: 30px; page-break-before: always;">
+            <h2 style="border-left: 4px solid #333; padding-left: 10px;">6. 천기도사님과의 상담 기록</h2>
+            ${chatMessages.map(msg => `
+              <div style="margin: 15px 0; padding: 15px; background: ${msg.role === 'user' ? '#e8e8e8' : '#f8f5f0'}; border-radius: 8px; ${msg.role === 'user' ? 'margin-left: 50px;' : 'margin-right: 50px;'}">
+                <p style="font-weight: bold; color: ${msg.role === 'user' ? '#333' : '#8b6914'}; margin-bottom: 5px;">
+                  ${msg.role === 'user' ? '❓ 질문' : '🔮 천기도사'}
+                </p>
+                <p style="white-space: pre-line; text-align: justify;">${msg.text}</p>
+              </div>
+            `).join('')}
+          </div>
+          
+          <div style="text-align: center; margin-top: 50px; padding-top: 20px; border-top: 2px solid #333;">
+            <p style="font-size: 16px; font-weight: bold;">천기누설 운명 감정원</p>
+            <p style="color: #666;">${new Date().toLocaleDateString('ko-KR')} 작성</p>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(pdfContainer);
+      
+      const canvas = await html2canvas(pdfContainer, { 
+        scale: 2, 
+        useCORS: true, 
+        backgroundColor: "#ffffff",
+        logging: false,
+        allowTaint: true
+      });
+      
+      document.body.removeChild(pdfContainer);
+      
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
       const pdf = new jsPDF('p', 'mm', 'a4');
-      const imgWidth = pdf.internal.pageSize.getWidth();
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pdfWidth;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
       let heightLeft = imgHeight;
       let position = 0;
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pdf.internal.pageSize.getHeight();
-      while (heightLeft >= 0) {
+      let pageCount = 0;
+      
+      // 첫 페이지
+      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pdfHeight;
+      pageCount++;
+      
+      // 추가 페이지
+      while (heightLeft > 0) {
         position = heightLeft - imgHeight;
         pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pdf.internal.pageSize.getHeight();
+        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight;
+        pageCount++;
       }
+      
       pdf.save(`${input.name}_천기누설_통합감정서.pdf`);
-    } catch (err) { alert("PDF 다운로드 실패"); }
+      alert(`PDF 다운로드 완료! (총 ${pageCount} 페이지)`);
+    } catch (err) { 
+      console.error('PDF 생성 오류:', err);
+      alert("PDF 다운로드 실패. 텍스트 파일로 다운로드를 시도해주세요."); 
+    }
   };
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [chatMessages]);
@@ -576,13 +863,130 @@ const App: React.FC = () => {
 
           <section className="bg-gray-900 text-gray-100 p-8 rounded-xl shadow-2xl"><h2 className="text-2xl font-serif font-bold mb-6 text-yellow-500">6. 귀인과 길일 (풍수지리)</h2><div className="mb-8"><table className="w-full text-sm text-left text-gray-300"><thead className="text-xs text-gray-400 uppercase bg-gray-800"><tr><th className="px-4 py-3">날짜</th><th className="px-4 py-3">시간</th><th className="px-4 py-3">방위</th></tr></thead><tbody className="divide-y divide-gray-700">{sajuResult.luckyTable.map((row, index) => <tr key={index}><td className="px-4 py-3 text-yellow-400 font-bold">{row.date}</td><td className="px-4 py-3">{row.time}</td><td className="px-4 py-3 text-blue-400">{row.direction}</td></tr>)}</tbody></table></div><div className="prose prose-invert max-w-none text-justify text-sm opacity-90"><h4 className="font-bold text-yellow-500 mb-2">풍수학적 분석</h4><p className="whitespace-pre-line">{sajuResult.fengShuiThesis}</p></div></section>
 
-          <section className="bg-white rounded-xl shadow-lg border-2 border-oriental-black overflow-hidden flex flex-col h-[600px]">
-            <div className="bg-oriental-black text-white p-4"><h3 className="font-serif font-bold text-xl">🔮 천기도사님 親見室</h3></div>
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">{chatMessages.filter(m => m.id !== 'init').map(msg => <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}><div className={`max-w-[85%] px-5 py-4 rounded-2xl text-sm whitespace-pre-wrap ${msg.role === 'user' ? 'bg-oriental-black text-white' : 'bg-white border border-gray-200'}`}>{msg.text}</div></div>)}<div ref={chatEndRef} /></div>
-            <form onSubmit={handleChatSubmit} className="p-3 border-t bg-white flex space-x-2"><input type="text" value={chatInput} onChange={e => setChatInput(e.target.value)} placeholder="질문을 입력하세요..." className="flex-1 px-4 py-2 border rounded-full" disabled={isChatLoading} /><button type="submit" className="bg-oriental-black text-white w-10 h-10 rounded-full flex items-center justify-center">➤</button></form>
+          {/* 천기도사님 친견실 - 확장된 채팅 섹션 */}
+          <section className="bg-white rounded-xl shadow-lg border-2 border-oriental-black overflow-hidden flex flex-col">
+            <div className="bg-oriental-black text-white p-4">
+              <h3 className="font-serif font-bold text-xl">🔮 천기도사님 親見室</h3>
+              <p className="text-sm text-gray-300 mt-1">궁금한 사항을 물어보시면 상세히 답변해 드립니다.</p>
+            </div>
+            
+            {/* 채팅 메시지 영역 */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 min-h-[400px] max-h-[600px]">
+              {chatMessages.map(msg => (
+                <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`max-w-[90%] px-5 py-4 rounded-2xl text-sm ${
+                    msg.role === 'user' 
+                      ? 'bg-oriental-black text-white' 
+                      : 'bg-white border border-gray-200 shadow-sm'
+                  }`}>
+                    {msg.role === 'model' && (
+                      <div className="flex items-center gap-2 mb-2 text-amber-700 font-bold">
+                        <span>🔮</span>
+                        <span>천기도사</span>
+                      </div>
+                    )}
+                    <div className="whitespace-pre-wrap leading-relaxed">{msg.text}</div>
+                  </div>
+                </div>
+              ))}
+              {isChatLoading && (
+                <div className="flex justify-start">
+                  <div className="bg-white border border-gray-200 px-5 py-4 rounded-2xl shadow-sm">
+                    <div className="flex items-center gap-2 text-gray-500">
+                      <span className="animate-pulse">🔮</span>
+                      <span>도사님이 천기를 읽고 계십니다...</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <div ref={chatEndRef} />
+            </div>
+            
+            {/* 예시 질문 버튼 */}
+            <div className="px-4 py-3 bg-gray-100 border-t border-gray-200">
+              <p className="text-xs text-gray-500 mb-2">예시 질문:</p>
+              <div className="flex flex-wrap gap-2">
+                {['내년에 직장을 이직하는데 좋은가요?', '내년에 애인이 생기나요?', '내년에 사업을 하면 좋은가요?'].map((q, i) => (
+                  <button 
+                    key={i} 
+                    onClick={() => setChatInput(q)}
+                    className="text-xs bg-white border border-gray-300 px-3 py-1.5 rounded-full hover:bg-gray-50 transition-colors"
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            {/* 입력 폼 */}
+            <form onSubmit={handleChatSubmit} className="p-3 border-t bg-white flex space-x-2">
+              <input 
+                type="text" 
+                value={chatInput} 
+                onChange={e => setChatInput(e.target.value)} 
+                placeholder="질문을 입력하세요..." 
+                className="flex-1 px-4 py-3 border rounded-full focus:outline-none focus:ring-2 focus:ring-oriental-gold" 
+                disabled={isChatLoading} 
+              />
+              <button 
+                type="submit" 
+                className="bg-oriental-black text-white w-12 h-12 rounded-full flex items-center justify-center hover:bg-gray-800 transition-colors disabled:opacity-50"
+                disabled={isChatLoading || !chatInput.trim()}
+              >
+                ➤
+              </button>
+            </form>
           </section>
 
-          <div className="flex justify-center pb-10"><button onClick={() => setShowEditModal(true)} className="bg-oriental-gold text-white px-10 py-5 rounded-full shadow-xl text-xl font-serif font-bold hover:bg-yellow-600">📄 다운로드 / 편집</button></div>
+          {/* 다운로드 섹션 */}
+          <section className="bg-gradient-to-r from-amber-50 to-orange-50 p-8 rounded-xl border border-amber-200 shadow-lg">
+            <div className="text-center mb-6">
+              <h3 className="text-2xl font-serif font-bold text-gray-800 mb-2">📄 감정서 다운로드</h3>
+              <p className="text-gray-600 text-sm">위의 상담 내용을 포함한 전체 감정서를 다운로드하세요.</p>
+            </div>
+            
+            <div className="flex flex-col md:flex-row justify-center gap-4">
+              <button 
+                onClick={handleDownloadText} 
+                className="flex items-center justify-center gap-2 bg-white border-2 border-gray-300 text-gray-700 px-8 py-4 rounded-xl shadow-md hover:bg-gray-50 transition-all font-bold"
+              >
+                <span className="text-2xl">📝</span>
+                <span>텍스트 파일 (TXT)</span>
+              </button>
+              <button 
+                onClick={handleDownloadPDF} 
+                className="flex items-center justify-center gap-2 bg-oriental-black text-white px-8 py-4 rounded-xl shadow-md hover:bg-gray-800 transition-all font-bold"
+              >
+                <span className="text-2xl">📕</span>
+                <span>PDF 파일</span>
+              </button>
+            </div>
+            
+            <div className="mt-6 text-center">
+              <button 
+                onClick={() => setShowEditModal(true)} 
+                className="text-gray-500 hover:text-gray-700 underline text-sm"
+              >
+                ✏️ 내용 편집 후 다운로드
+              </button>
+            </div>
+            
+            <div className="mt-6 p-4 bg-white/50 rounded-lg">
+              <p className="text-xs text-gray-500 text-center">
+                💡 Tip: 전체 내용(만세력 + 운세 분석 + 상담 기록)을 담으면 PDF 약 <strong>15~25페이지</strong> 분량이 됩니다.
+              </p>
+            </div>
+          </section>
+
+          {/* 처음으로 돌아가기 */}
+          <div className="flex justify-center pb-10">
+            <button 
+              onClick={() => { setSajuResult(null); setChatMessages([]); }} 
+              className="text-gray-500 hover:text-gray-700 underline"
+            >
+              🏠 처음으로 돌아가기
+            </button>
+          </div>
         </div>
       )}
 
