@@ -100,12 +100,79 @@ function getApiKey(userKey?: string): string | undefined {
 // 3. Main Analysis Logic
 // ---------------------------------------------------------------------------
 
+// Generate default interpretations based on day stem
+function getDefaultInterpretation(dayStem: string, counts: Record<string, number>) {
+  const dayMasterDescriptions: Record<string, string> = {
+    "甲": "갑목(甲木)은 큰 나무와 같아 곧고 정직하며 리더십이 강합니다. 성장과 발전을 추구하며, 새로운 시작을 좋아합니다. 다소 고집이 있지만 의리가 있고 정의로운 성품을 지녔습니다.",
+    "乙": "을목(乙木)은 풀과 넝쿨처럼 유연하고 적응력이 뛰어납니다. 부드럽고 온화하며 예술적 감각이 있습니다. 협조적이고 외교적 능력이 탁월합니다.",
+    "丙": "병화(丙火)는 태양처럼 밝고 열정적입니다. 활발하고 적극적이며 사교성이 좋습니다. 낙천적이고 명랑하여 주변을 밝게 만드는 능력이 있습니다.",
+    "丁": "정화(丁火)는 촛불처럼 은은하고 따뜻합니다. 섬세하고 예민하며 통찰력이 뛰어납니다. 내면의 열정을 간직하고 있으며 정신적 깊이가 있습니다.",
+    "戊": "무토(戊土)는 산과 같이 듬직하고 안정적입니다. 신뢰감을 주며 포용력이 큽니다. 중재 능력이 뛰어나고 책임감이 강합니다.",
+    "己": "기토(己土)는 논밭처럼 비옥하고 생산적입니다. 꼼꼼하고 실용적이며 현실적입니다. 인내심이 강하고 성실합니다.",
+    "庚": "경금(庚金)은 강철처럼 강인하고 결단력이 있습니다. 정의감이 강하고 원칙을 중시합니다. 추진력과 실행력이 뛰어납니다.",
+    "辛": "신금(辛金)은 보석처럼 섬세하고 정교합니다. 미적 감각이 뛰어나고 완벽을 추구합니다. 예민하고 감수성이 풍부합니다.",
+    "壬": "임수(壬水)는 바다처럼 넓고 깊습니다. 지혜롭고 창의적이며 포용력이 큽니다. 자유로운 영혼으로 모험을 즐깁니다.",
+    "癸": "계수(癸水)는 비와 이슬처럼 부드럽고 침투력이 있습니다. 직관력이 뛰어나고 영적 감각이 있습니다. 적응력이 좋고 인내심이 강합니다."
+  };
+
+  // Find missing elements
+  const elements = ['Wood', 'Fire', 'Earth', 'Metal', 'Water'];
+  const koreanElements: Record<string, string> = { 'Wood': '목(木)', 'Fire': '화(火)', 'Earth': '토(土)', 'Metal': '금(金)', 'Water': '수(水)' };
+  const missingElements = elements
+    .filter(el => counts[el] === 0 || counts[el] === 1)
+    .sort((a, b) => counts[a] - counts[b])
+    .slice(0, 2)
+    .map((el, idx) => ({ element: koreanElements[el], priority: idx + 1 }));
+
+  if (missingElements.length === 0) {
+    missingElements.push({ element: '균형 잡힘', priority: 1 });
+  }
+
+  return {
+    dayMasterReading: dayMasterDescriptions[dayStem] || "일간의 기운을 분석 중입니다.",
+    missingElements,
+    chaeumAdvice: {
+      summary: `부족한 오행을 보충하여 균형을 맞추는 것이 좋습니다. ${missingElements.map(m => m.element).join(', ')} 기운을 보강하세요.`,
+      color: missingElements[0]?.element.includes('목') ? "초록색, 청색" : 
+             missingElements[0]?.element.includes('화') ? "빨간색, 보라색" :
+             missingElements[0]?.element.includes('토') ? "노란색, 갈색" :
+             missingElements[0]?.element.includes('금') ? "흰색, 금색" : "검은색, 파란색",
+      direction: missingElements[0]?.element.includes('목') ? "동쪽" : 
+                 missingElements[0]?.element.includes('화') ? "남쪽" :
+                 missingElements[0]?.element.includes('토') ? "중앙" :
+                 missingElements[0]?.element.includes('금') ? "서쪽" : "북쪽",
+      items: "해당 오행과 관련된 물건이나 음식을 가까이 하세요."
+    },
+    healthAnalysis: {
+      weakOrgans: "오행 균형에 따라 주의가 필요한 장기가 있습니다.",
+      symptoms: "평소 건강 관리에 신경 쓰시기 바랍니다.",
+      medicalAdvice: "정기적인 건강검진을 권장합니다.",
+      foodRecommendation: "균형 잡힌 식단을 유지하세요."
+    },
+    fortune2026: {
+      overall: "2026년 병오년(丙午年)은 화(火)기운이 강한 해입니다. 열정과 활력이 넘치는 한 해가 될 것입니다.",
+      wealth: "재물운은 노력한 만큼 결실을 맺을 수 있습니다.",
+      career: "직장에서 인정받을 수 있는 기회가 있습니다.",
+      health: "건강 관리에 신경 쓰시기 바랍니다.",
+      love: "인간관계가 활발해지는 시기입니다."
+    },
+    luckyTable: [
+      { date: "1월 15일", time: "오전 9시-11시", direction: "동쪽" },
+      { date: "3월 21일", time: "오전 7시-9시", direction: "남쪽" },
+      { date: "6월 10일", time: "오후 1시-3시", direction: "서쪽" }
+    ],
+    fengShuiThesis: "거주 공간의 기운을 좋게 하려면 환기를 자주 하고, 밝은 조명을 사용하세요. 침실은 북쪽이나 동쪽에 배치하면 좋습니다."
+  };
+}
+
 export const analyzeSaju = async (input: UserInput): Promise<SajuAnalysisResult> => {
   const apiKey = getApiKey(input.apiKey);
-  if (!apiKey) {
-    throw new Error("API Key가 없습니다. 입력창에 키를 입력하고 저장해주세요.");
+  const useAI = !!apiKey;
+  
+  let ai: any = null;
+  if (useAI) {
+    ai = new GoogleGenAI({ apiKey: apiKey });
   }
-  const ai = new GoogleGenAI({ apiKey: apiKey });
 
   // 1. Calculate Pillars LOCALLY
   const [year, month, day] = input.birthDate.split('-').map(Number);
@@ -332,6 +399,32 @@ export const analyzeSaju = async (input: UserInput): Promise<SajuAnalysisResult>
     required: ["dayMasterReading", "missingElements", "chaeumAdvice", "healthAnalysis", "fortune2026", "luckyTable", "fengShuiThesis"]
   };
 
+  // If no API key, use default interpretations
+  if (!useAI) {
+    const defaultResult = getDefaultInterpretation(dayStem, counts);
+    return {
+      koreanAge,
+      solarDateStr,
+      lunarDateStr,
+      solarTermStr,
+      yearPillar,
+      monthPillar,
+      dayPillar,
+      hourPillar,
+      elementCounts: counts,
+      daewun: daewunList,
+      saewun: saewunList,
+      wolwun: wolwunList,
+      missingElements: defaultResult.missingElements,
+      dayMasterReading: defaultResult.dayMasterReading,
+      chaeumAdvice: defaultResult.chaeumAdvice,
+      healthAnalysis: defaultResult.healthAnalysis,
+      fortune2026: defaultResult.fortune2026,
+      luckyTable: defaultResult.luckyTable,
+      fengShuiThesis: defaultResult.fengShuiThesis
+    };
+  }
+
   try {
     const response = await ai.models.generateContent({
       model,
@@ -369,7 +462,29 @@ export const analyzeSaju = async (input: UserInput): Promise<SajuAnalysisResult>
     };
   } catch (error) {
     console.error(error);
-    throw error;
+    // Fallback to default if AI fails
+    const defaultResult = getDefaultInterpretation(dayStem, counts);
+    return {
+      koreanAge,
+      solarDateStr,
+      lunarDateStr,
+      solarTermStr,
+      yearPillar,
+      monthPillar,
+      dayPillar,
+      hourPillar,
+      elementCounts: counts,
+      daewun: daewunList,
+      saewun: saewunList,
+      wolwun: wolwunList,
+      missingElements: defaultResult.missingElements,
+      dayMasterReading: defaultResult.dayMasterReading,
+      chaeumAdvice: defaultResult.chaeumAdvice,
+      healthAnalysis: defaultResult.healthAnalysis,
+      fortune2026: defaultResult.fortune2026,
+      luckyTable: defaultResult.luckyTable,
+      fengShuiThesis: defaultResult.fengShuiThesis
+    };
   }
 };
 
