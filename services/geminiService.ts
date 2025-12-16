@@ -85,13 +85,13 @@ function getGanjiKorean(ganji: string): string {
 function getApiKey(userKey?: string): string | undefined {
   if (userKey && userKey.trim().length > 0) return userKey;
   try {
-    // @ts-ignore
-    if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
+    // @ts-ignore - Vite env variables
+    if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_GEMINI_API_KEY) {
       // @ts-ignore
-      return process.env.API_KEY;
+      return import.meta.env.VITE_GEMINI_API_KEY;
     }
   } catch (e) {
-    // Ignore error if process is undefined
+    // Ignore error if import.meta is undefined
   }
   return undefined;
 }
@@ -226,13 +226,15 @@ export const analyzeSaju = async (input: UserInput): Promise<SajuAnalysisResult>
         const s = Solar.fromYmd(y, m, 15);
         const l = s.getLunar();
         const bz = l.getEightChar();
-        const mGanZhi = bz.getMonthGanZhi(); 
+        const monthGan = bz.getMonthGan();
+        const monthZhi = bz.getMonthZhi();
+        const mGanZhi = monthGan + monthZhi;
 
         wolwunList.push({
           age: `${y}.${m}`,
           ganji: mGanZhi,
           ganjiKorean: getGanjiKorean(mGanZhi),
-          tenGod: getTenGod(dayStem, mGanZhi.charAt(0))
+          tenGod: getTenGod(dayStem, monthGan)
         });
       } catch (e) {
         console.warn(`Wolwun error at ${y}.${m}`, e);
