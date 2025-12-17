@@ -417,16 +417,25 @@ export const analyzeSaju = async (input: UserInput): Promise<SajuAnalysisResult>
   const startWolwunYear = year; // 태어난 해부터 시작
   const endWolwunYear = currentYear + 5; // 현재 + 5년까지
   
-  // 원광대 방식: 양력 N월에 표시되는 월운은 해당 월 중순~말의 절기 기준 월간지
-  // 1월 = 인월(寅月), 2월 = 묘월(卯月), ... 12월 = 축월(丑月)
-  // 각 월의 20일경을 기준으로 하면 확실히 해당 월의 절기에 들어감
+  // 원광대 방식: 양력 N월에는 그 다음 달 중순의 절기 월간지를 표시
+  // 양력 1월 → 인월(寅月, 입춘 후) = 2월 중순 기준
+  // 양력 2월 → 묘월(卯月, 경칩 후) = 3월 중순 기준
+  // ...
+  // 양력 12월 → 축월(丑月, 소한 후) = 다음해 1월 중순 기준
   
   // 각 해의 12개월 월운 계산
   for (let targetYear = startWolwunYear; targetYear <= endWolwunYear; targetYear++) {
     for (let displayMonth = 1; displayMonth <= 12; displayMonth++) {
       try {
-        // 해당 월의 20일을 기준으로 계산 (절입일 이후 확실한 시점)
-        const s = Solar.fromYmd(targetYear, displayMonth, 20);
+        // 다음 달 15일을 기준으로 계산 (해당 월에 시작하는 절기의 월간지)
+        let calcYear = targetYear;
+        let calcMonth = displayMonth + 1;
+        if (calcMonth > 12) {
+          calcMonth = 1;
+          calcYear = targetYear + 1;
+        }
+        
+        const s = Solar.fromYmd(calcYear, calcMonth, 15);
         const l = s.getLunar();
         const bz = l.getEightChar();
         const monthGan = bz.getMonthGan();
