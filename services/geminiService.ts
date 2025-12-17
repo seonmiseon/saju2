@@ -417,12 +417,19 @@ export const analyzeSaju = async (input: UserInput): Promise<SajuAnalysisResult>
   const startWolwunYear = year; // 태어난 해부터 시작
   const endWolwunYear = currentYear + 5; // 현재 + 5년까지
   
+  // 월별 절입일 대략적인 날짜 (절기 시작일)
+  // 원광대 방식: 각 월의 절입일 이후의 간지를 해당 월로 표시
+  const jeolipDays = [6, 4, 6, 5, 6, 6, 7, 8, 8, 9, 8, 7]; // 각 월의 대략적인 절입일
+  
   // 각 해의 12개월 월운 계산
   for (let targetYear = startWolwunYear; targetYear <= endWolwunYear; targetYear++) {
     for (let displayMonth = 1; displayMonth <= 12; displayMonth++) {
       try {
-        // 각 월의 10일을 기준으로 계산 (절입일 이후)
-        const s = Solar.fromYmd(targetYear, displayMonth, 10);
+        // 해당 월의 절입일 + 5일을 기준으로 계산 (절기 이후 시점)
+        const jeolipDay = jeolipDays[displayMonth - 1];
+        const calcDay = Math.min(jeolipDay + 5, 28); // 절입일 + 5일
+        
+        const s = Solar.fromYmd(targetYear, displayMonth, calcDay);
         const l = s.getLunar();
         const bz = l.getEightChar();
         const monthGan = bz.getMonthGan();
