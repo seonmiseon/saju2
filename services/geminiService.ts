@@ -396,16 +396,20 @@ export const analyzeSaju = async (input: UserInput): Promise<SajuAnalysisResult>
     });
   }
 
-  // 5. Calculate Saewun (Yearly Luck) - with calendar year
+  // 5. Calculate Saewun (Yearly Luck) - 원광대 만세력 입춘 기준
   const saewunList: CycleItem[] = [];
   const currentYear = new Date().getFullYear();
-  // Show 10 years before and 10 years after current year (total ~21 years visible initially)
+  // Show 80 years (출생~2100년)
   for (let i = 0; i <= 80; i++) {
     const targetYear = year + i;
     if (targetYear > 2100) break;
 
     try {
-      const l = Lunar.fromYmd(targetYear, 6, 1);
+      // 2월 4일(입춘) 기준으로 연간지 결정
+      // 1월~입춘 전: 전년도 간지, 입춘~12월: 해당년도 간지
+      // 원광대는 2월 4일(입춘)부터 해당 해의 간지로 바뀜
+      const ipchun = Solar.fromYmd(targetYear, 2, 4);
+      const l = ipchun.getLunar();
       const ganZhi = l.getYearInGanZhi();
       saewunList.push({
         age: i + 1, // Age (Korean age)
